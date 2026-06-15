@@ -1,8 +1,8 @@
 NAME = PROJECT
 VERSION = 0.1.0
 VENV = .venv
-SRC_DIR = src/
-MAIN = app/main.py
+SRC_DIR = src
+MAIN = main.py
 
 
 all: install
@@ -27,10 +27,10 @@ build: install
 	@uv build
 
 run:
-	@uv run $(SRC_DIR)$(MAIN)
+	@uv run $(SRC_DIR)/$(MAIN)
 
 debug:
-	@uv run python3 -m pdb $(SRC_DIR)$(MAIN)
+	@uv run python3 -m pdb $(SRC_DIR)/$(MAIN)
 
 clean:
 	@echo "Removing temporary files or caches"
