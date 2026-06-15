@@ -1,5 +1,5 @@
 import pytest
-from app.utils.math_helpers import add, divide
+from utils.math_helpers import add, divide
 
 
 def test_add_positive_numbers() -> None:

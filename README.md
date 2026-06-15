@@ -7,7 +7,7 @@ _This project has been created as part of the 42 curriculum by marberge._
   <br>
 </div>
 
-# [PROJECT TITLE]
+# Fly-in
 
 ![Language](https://img.shields.io/badge/Language-python-blue)
 
@@ -16,7 +16,9 @@ _This project has been created as part of the 42 curriculum by marberge._
 
 ## I. Description
 
-To define.
+Design an efficient drone routing system that navigates multiple drones
+through connected zones while minimizing simulation turns and handling movement
+constraints.
 
 ## II. Instructions
 
