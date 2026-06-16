@@ -5,7 +5,8 @@ from arcade.gui import (
     UIBoxLayout,
     UILabel
 )
-from ui.button import Button
+from components.button import Button
+from components.text import Text
 
 
 class LevelView(arcade.View):
@@ -23,17 +24,11 @@ class LevelView(arcade.View):
 
         self.ui = UIManager()
         anchor = self.ui.add(UIAnchorLayout())
-        global_box = UIBoxLayout(space_between=80)
+        global_box = UIBoxLayout(space_between=200)
         button_box = UIBoxLayout(space_between=100, vertical=False)
 
         if levels:
-            global_box.add(
-                UILabel(
-                    text="Choose the difficulty",
-                    font_size=30,
-                    text_color=arcade.color.WHITE,
-                )
-            )
+            global_box.add(Text(text="Choose the difficulty"))
 
             for level in levels:
                 button_box.add(Button(

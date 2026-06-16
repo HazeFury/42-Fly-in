@@ -3,12 +3,10 @@ from arcade.gui import (
     UIManager,
     UIAnchorLayout,
     UIBoxLayout,
-    UILabel
 )
 from views.level_view import LevelView
-from ui.button import Button
-
-arcade.load_font(":resources:/fonts/ttf/Kenney/Kenney_Blocks.ttf")
+from components.button import Button
+from components.text import Text
 
 
 class MenuView(arcade.View):
@@ -22,10 +20,9 @@ class MenuView(arcade.View):
         button_box = UIBoxLayout(space_between=100)
 
         button_box.add(
-            UILabel(
-                text="Snake Game",
-                font_size=50,
-                text_color=arcade.color.WHITE,
+            Text(
+                text="Fly-in",
+                font_size=80,
                 font_name="Kenney Blocks",
             )
         )
