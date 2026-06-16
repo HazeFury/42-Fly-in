@@ -1,24 +1,13 @@
 import arcade
 from arcade.gui import (
     UIManager,
-    UITextureButton,
     UIAnchorLayout,
     UIBoxLayout,
     UILabel
 )
-# from views.level_selection import LevelView
+from views.level_view import LevelView
+from ui.button import Button
 
-# Preload textures, because they are mostly used multiple times,so they are not
-# loaded multiple times
-TEX_RED_BUTTON_NORMAL = arcade.load_texture(
-    ":resources:gui_basic_assets/button/red_normal.png"
-)
-TEX_RED_BUTTON_HOVER = arcade.load_texture(
-    ":resources:gui_basic_assets/button/red_hover.png"
-)
-TEX_RED_BUTTON_PRESS = arcade.load_texture(
-    ":resources:gui_basic_assets/button/red_press.png"
-)
 arcade.load_font(":resources:/fonts/ttf/Kenney/Kenney_Blocks.ttf")
 
 
@@ -28,12 +17,8 @@ class MenuView(arcade.View):
     def __init__(self):
         super().__init__()
 
-        # Create a UIManager
         self.ui = UIManager()
-
-        # Create anchor layout, which can be used to position widgets on screen
         anchor = self.ui.add(UIAnchorLayout())
-
         button_box = UIBoxLayout(space_between=100)
 
         button_box.add(
@@ -45,33 +30,17 @@ class MenuView(arcade.View):
             )
         )
 
-        # Add a button switch to the other View.
-        play_button = button_box.add(
-            UITextureButton(
-                text="Play",
-                texture=TEX_RED_BUTTON_NORMAL,
-                texture_hovered=TEX_RED_BUTTON_HOVER,
-                texture_pressed=TEX_RED_BUTTON_PRESS,
+        button_box.add(Button(
+            text="Play",
+            action=lambda: self.window.show_view(LevelView())
             )
         )
 
-        @play_button.event("on_click")
-        def on_click_play(event):
-            # self.window.show_view(LevelView())
-            print("go to level view")
-
-        exit_button = button_box.add(
-            UITextureButton(
-                text="Exit Game",
-                texture=TEX_RED_BUTTON_NORMAL,
-                texture_hovered=TEX_RED_BUTTON_HOVER,
-                texture_pressed=TEX_RED_BUTTON_PRESS,
+        button_box.add(Button(
+            text="Exit Game",
+            action=lambda: self.window.close()
             )
         )
-
-        @exit_button.event("on_click")
-        def on_click_exit(event):
-            self.window.close()
 
         anchor.add(button_box)
 
@@ -82,13 +51,6 @@ class MenuView(arcade.View):
         self.ui.disable()
 
     def on_draw(self):
-        # Clear the screen
         self.clear(color=arcade.uicolor.GREEN_EMERALD)
 
-        # Add draw commands that should be below the UI
-        # ...
-
         self.ui.draw()
-
-        # Add draw commands that should be on top of the UI (uncommon)
-        # ...

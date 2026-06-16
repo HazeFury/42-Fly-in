@@ -9,7 +9,7 @@ def main() -> None:
     print("Please select a card in the Arcade window...")
 
     try:
-        window = arcade.Window(1280, 720, "Fly-in Simulation")
+        window = arcade.Window(1680, 1050, "Fly-in Simulation")
 
         window.show_view(MenuView())
 
