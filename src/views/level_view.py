@@ -7,6 +7,7 @@ from arcade.gui import (
 )
 from components.button import Button
 from components.text import Text
+from utils.get_path import get_complete_path
 
 
 class LevelView(arcade.View):
@@ -14,6 +15,9 @@ class LevelView(arcade.View):
 
     def __init__(self):
         super().__init__()
+
+        background_path = get_complete_path("assets/background.png")
+        self.background_texture = arcade.load_texture(background_path)
 
         levels = [
             {"level": "Easy"},
@@ -28,7 +32,13 @@ class LevelView(arcade.View):
         button_box = UIBoxLayout(space_between=100, vertical=False)
 
         if levels:
-            global_box.add(Text(text="Choose the difficulty"))
+            text = Text(text="Choose the difficulty")
+
+            final_text = (
+                text.with_padding(all=15)
+                    .with_background(color=arcade.color.LIGHT_BROWN)
+                    .with_border(color=arcade.color.BLACK, width=2)
+                )
 
             for level in levels:
                 button_box.add(Button(
@@ -38,6 +48,7 @@ class LevelView(arcade.View):
                     height=100
                     )
                 )
+            global_box.add(final_text)
             global_box.add(button_box)
 
         else:
@@ -50,8 +61,10 @@ class LevelView(arcade.View):
             )
 
         from views.menu_view import MenuView
+
         global_box.add(Button(
             text="Go back to menu",
+            scale=1.5,
             action=lambda: self.window.show_view(MenuView())
             )
         )
@@ -65,6 +78,16 @@ class LevelView(arcade.View):
         self.ui.disable()
 
     def on_draw(self):
-        self.clear(color=arcade.uicolor.GREEN_EMERALD)
+        self.clear(color=arcade.color.BLACK)
+
+        arcade.draw_texture_rect(
+            texture=self.background_texture,
+            rect=arcade.rect.XYWH(
+                self.window.width / 2,
+                self.window.height / 2,
+                self.window.width,
+                self.window.height
+            )
+        )
 
         self.ui.draw()
