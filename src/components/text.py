@@ -3,6 +3,7 @@ from arcade.gui import UILabel
 
 arcade.load_font(":resources:/fonts/ttf/Kenney/Kenney_Blocks.ttf")
 arcade.load_font(":resources:/fonts/ttf/Kenney/Kenney_Mini_Square.ttf")
+arcade.load_font(":resources:/fonts/ttf/Kenney/Kenney_Future.ttf")
 
 
 class Text(UILabel):
