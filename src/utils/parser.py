@@ -37,7 +37,7 @@ PATTERN_CONNECTION = re.compile(
 )
 
 # Matches key=value pairs inside the metadata brackets
-PATTERN_META = re.compile(r"(?P<key>\w+)=(?P<value>\w+)")
+PATTERN_META = re.compile(r"(?P<key>\w+)=(?P<value>[\w-]+)")
 
 
 def extract_metadata(meta_string: str | None) -> dict[str, str]:

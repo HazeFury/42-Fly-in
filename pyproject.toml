@@ -17,7 +17,9 @@ dev = [
 ]
 
 [tool.mypy]
+mypy_path = "src"
 strict = true
+explicit_package_bases = true
 warn_return_any = true
 warn_unused_ignores = true
 ignore_missing_imports = true
@@ -26,3 +28,6 @@ check_untyped_defs = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = [
+  "src"
+]
