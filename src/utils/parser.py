@@ -1,7 +1,18 @@
 import re
 from pathlib import Path
-from typing import Any
+from typing import Any, TypedDict
 from utils.errors import ParseError
+
+
+class ParsedLevelData(TypedDict):
+    """
+    Defines the exact structure of the parsed dictionary
+    to ensure full type safety with mypy.
+    """
+    level_name: str
+    nb_drones: int
+    zones: list[dict[str, Any]]
+    connections: list[dict[str, Any]]
 
 
 # Pre-compile regex patterns for better performance
@@ -42,7 +53,7 @@ def extract_metadata(meta_string: str | None) -> dict[str, str]:
     }
 
 
-def parse_map_file(filepath: str) -> dict[str, Any]:
+def parse_map_file(filepath: str) -> ParsedLevelData:
     """
     Reads and parses a Fly-in map file.
 
@@ -58,7 +69,7 @@ def parse_map_file(filepath: str) -> dict[str, Any]:
     # Extract the clean name for your Arcade GUI (e.g., "01_linear_path")
     level_name = file_path_obj.stem
 
-    parsed_data = {
+    parsed_data: ParsedLevelData = {
         "level_name": level_name,
         "nb_drones": 0,
         "zones": [],

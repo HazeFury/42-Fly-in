@@ -13,7 +13,7 @@ from utils.get_path import get_complete_path
 class MenuView(arcade.View):
     """Uses the arcade.View and shows how to integrate UIManager."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         # 1. Dynamically resolve the absolute path to the assets folder
@@ -69,7 +69,7 @@ class MenuView(arcade.View):
     def on_hide_view(self) -> None:
         self.ui.disable()
 
-    def on_draw(self):
+    def on_draw(self) -> None:
         """
         Render the screen with the background and UI elements.
         """

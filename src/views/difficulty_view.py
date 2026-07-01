@@ -13,7 +13,7 @@ from views.level_view import LevelView
 class DifficultyView(arcade.View):
     """Uses the arcade.View and shows how to integrate UIManager."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         background_path = get_complete_path("assets/background.png")
@@ -69,7 +69,7 @@ class DifficultyView(arcade.View):
     def on_hide_view(self) -> None:
         self.ui.disable()
 
-    def on_draw(self):
+    def on_draw(self) -> None:
         self.clear(color=arcade.color.BLACK)
 
         arcade.draw_texture_rect(
