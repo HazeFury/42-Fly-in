@@ -1,3 +1,4 @@
+from typing import Any
 import arcade
 from arcade.gui import UILabel
 
@@ -14,9 +15,10 @@ class Text(UILabel):
     def __init__(self,
                  text: str,
                  font_size: int = 30,
-                 text_color=arcade.color.WHITE,
-                 font_name="Kenney Mini Square",
-                 **kwargs):
+                 text_color: Any = arcade.color.WHITE,
+                 font_name: str = "Kenney Mini Square",
+                 **kwargs: Any
+                 ):
         """
         Initialize the custom button with predefined textures.
         """

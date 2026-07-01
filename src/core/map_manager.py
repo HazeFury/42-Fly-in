@@ -1,4 +1,3 @@
-# from pathlib import Path
 from typing import Dict, Optional
 from utils.models import LevelData
 from utils.parser import parse_map_file
@@ -42,7 +41,8 @@ class MapManager:
                     raw_data = parse_map_file(str(file_path))
 
                     # 2. Validate and convert to Pydantic object
-                    level_data = LevelData(**raw_data)
+                    # Using model_validate resolves mypy typing conflicts
+                    level_data = LevelData.model_validate(raw_data)
 
                     # 3. Cache the object using its clean level name as the key
                     self._maps[difficulty][level_data.level_name] = level_data
@@ -51,7 +51,7 @@ class MapManager:
                     print("[ERROR] Failed to load map file "
                           f"'{file_path.name}': {e}")
 
-    def get_all_maps(self) -> Dict[str, LevelData]:
+    def get_all_maps(self) -> Dict[str, Dict[str, LevelData]]:
         """Retrieves all loaded maps."""
         return self._maps
 

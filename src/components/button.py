@@ -1,5 +1,5 @@
 import arcade
-from arcade.gui import UITextureButton
+from arcade.gui import UITextureButton, UIOnClickEvent
 from typing import Callable, Any
 
 # Preload textures, because they are mostly used multiple times,so they are not
@@ -20,7 +20,7 @@ class Button(UITextureButton):
     Custom UI Button standardizing the visual styling across the application.
     """
 
-    def __init__(self, text: str, action: Callable[..., Any], **kwargs):
+    def __init__(self, text: str, action: Callable[..., Any], **kwargs: Any):
         """
         Initialize the custom button with predefined textures.
         """
@@ -33,5 +33,5 @@ class Button(UITextureButton):
             **kwargs)
 
         @self.event("on_click")
-        def on_click(event):
+        def on_click(event: UIOnClickEvent) -> None:
             action()
