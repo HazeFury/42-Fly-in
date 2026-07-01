@@ -8,19 +8,23 @@ from arcade.gui import (
 from components.button import Button
 from components.text import Text
 from utils.get_path import get_complete_path
-from core.map_manager import maps_registry
 
 
-class LevelView(arcade.View):
+class DifficultyView(arcade.View):
     """Uses the arcade.View and shows how to integrate UIManager."""
 
-    def __init__(self, difficulty: str):
+    def __init__(self):
         super().__init__()
 
         background_path = get_complete_path("assets/background.png")
         self.background_texture = arcade.load_texture(background_path)
 
-        
+        levels = [
+            {"level": "Easy"},
+            {"level": "Medium"},
+            {"level": "Hard"},
+            {"level": "CHALLENGER"}
+        ]
 
         self.ui = UIManager()
         anchor = self.ui.add(UIAnchorLayout())
