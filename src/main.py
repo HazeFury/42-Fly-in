@@ -1,12 +1,15 @@
 import arcade
 import sys
 from views.menu_view import MenuView
+from core.map_manager import maps_registry
 from utils.errors import CustomError
 
 
 def main() -> None:
     print("--- STARTING THE PROGRAM ---")
     print("Please select a card in the Arcade window...")
+
+    print(maps_registry.get_maps_by_difficulty("easy"))
 
     try:
         window = arcade.Window(1680, 1050, "Fly-in Simulation")
