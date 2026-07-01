@@ -4,10 +4,10 @@ from arcade.gui import (
     UIAnchorLayout,
     UIBoxLayout,
 )
-from components.button import Button
-from components.text import Text
-from utils.get_path import get_complete_path
-from core.map_manager import maps_registry
+from src.components.button import Button
+from src.components.text import Text
+from src.utils.get_path import get_complete_path
+from src.core.map_manager import maps_registry
 
 
 class LevelView(arcade.View):
