@@ -1,9 +1,9 @@
 import pytest
 from pathlib import Path
 from pydantic import ValidationError
-from src.utils.errors import ParseError
-from src.utils.parser import parse_map_file
-from src.utils.models import LevelData
+from utils.errors import ParseError
+from utils.parser import parse_map_file
+from utils.models import LevelData
 
 
 def test_parse_valid_minimal_file(tmp_path: Path) -> None:

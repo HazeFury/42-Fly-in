@@ -4,10 +4,10 @@ from arcade.gui import (
     UIAnchorLayout,
     UIBoxLayout,
 )
-from src.components.button import Button
-from src.components.text import Text
-from src.utils.get_path import get_complete_path
-from src.views.level_view import LevelView
+from components.button import Button
+from components.text import Text
+from utils.get_path import get_complete_path
+from views.level_view import LevelView
 
 
 class DifficultyView(arcade.View):

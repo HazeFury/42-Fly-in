@@ -4,10 +4,10 @@ from arcade.gui import (
     UIAnchorLayout,
     UIBoxLayout,
 )
-from src.views.difficulty_view import DifficultyView
-from src.components.button import Button
-from src.components.text import Text
-from src.utils.get_path import get_complete_path
+from views.difficulty_view import DifficultyView
+from components.button import Button
+from components.text import Text
+from utils.get_path import get_complete_path
 
 
 class MenuView(arcade.View):

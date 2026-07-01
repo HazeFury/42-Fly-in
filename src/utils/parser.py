@@ -1,7 +1,7 @@
 import re
 from pathlib import Path
 from typing import Any, TypedDict
-from src.utils.errors import ParseError
+from utils.errors import ParseError
 
 
 class ParsedLevelData(TypedDict):
