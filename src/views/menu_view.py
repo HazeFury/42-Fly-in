@@ -4,7 +4,7 @@ from arcade.gui import (
     UIAnchorLayout,
     UIBoxLayout,
 )
-from views.level_view import LevelView
+from views.difficulty_view import DifficultyView
 from components.button import Button
 from components.text import Text
 from utils.get_path import get_complete_path
@@ -50,7 +50,7 @@ class MenuView(arcade.View):
 
         button_box.add(Button(
             text="Play",
-            action=lambda: self.window.show_view(LevelView()),
+            action=lambda: self.window.show_view(DifficultyView()),
             scale=2.0
             )
         )
