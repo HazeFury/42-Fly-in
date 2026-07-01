@@ -22,8 +22,9 @@ class MapManager:
 
     def load_all_maps(self) -> None:
         """
-        Discovers, parses, and validates all .txt map files under the maps directory.
-        Categories are automatically determined based on subfolder names.
+        Discovers, parses, and validates all .txt map files under the maps
+        directory. Categories are automatically determined based on
+        subfolder names.
         """
         maps_dir = get_complete_path("maps")
 
@@ -62,7 +63,8 @@ class MapManager:
 
     def get_map(self, difficulty: str, level_name: str) -> Optional[LevelData]:
         """
-        Retrieves a single validated LevelData object by its difficulty and name.
+        Retrieves a single validated LevelData object by its difficulty
+        and name.
         """
         return self._maps.get(difficulty, {}).get(level_name)
 
