@@ -3,11 +3,11 @@ from arcade.gui import (
     UIManager,
     UIAnchorLayout,
     UIBoxLayout,
-    UILabel
 )
 from components.button import Button
 from components.text import Text
 from utils.get_path import get_complete_path
+from views.level_view import LevelView
 
 
 class DifficultyView(arcade.View):
@@ -19,11 +19,11 @@ class DifficultyView(arcade.View):
         background_path = get_complete_path("assets/background.png")
         self.background_texture = arcade.load_texture(background_path)
 
-        levels = [
-            {"level": "Easy"},
-            {"level": "Medium"},
-            {"level": "Hard"},
-            {"level": "CHALLENGER"}
+        difficulties = [
+            "easy",
+            "medium",
+            "hard",
+            "challenger"
         ]
 
         self.ui = UIManager()
@@ -31,34 +31,26 @@ class DifficultyView(arcade.View):
         global_box = UIBoxLayout(space_between=200)
         button_box = UIBoxLayout(space_between=100, vertical=False)
 
-        if levels:
-            text = Text(text="Choose the difficulty")
+        text = Text(text="Choose the difficulty")
 
-            final_text = (
-                text.with_padding(all=15)
-                    .with_background(color=arcade.color.LIGHT_BROWN)
-                    .with_border(color=arcade.color.BLACK, width=2)
-                )
+        final_text = (
+            text.with_padding(all=15)
+                .with_background(color=arcade.color.LIGHT_BROWN)
+                .with_border(color=arcade.color.BLACK, width=2)
+            )
 
-            for level in levels:
-                button_box.add(Button(
-                    text=level["level"],
-                    action=lambda current=level["level"]: print(current),
-                    width=200,
-                    height=100
-                    )
-                )
-            global_box.add(final_text)
-            global_box.add(button_box)
-
-        else:
-            global_box.add(
-                UILabel(
-                    text="No level found !",
-                    font_size=30,
-                    text_color=arcade.color.WHITE,
+        for diff in difficulties:
+            button_box.add(Button(
+                text=diff,
+                action=lambda choosen_diff=diff: self.window.show_view(
+                    LevelView(choosen_diff)
+                    ),
+                width=200,
+                height=100
                 )
             )
+        global_box.add(final_text)
+        global_box.add(button_box)
 
         from views.menu_view import MenuView
 
