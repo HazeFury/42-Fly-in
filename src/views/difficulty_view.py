@@ -11,7 +11,7 @@ from views.level_view import LevelView
 
 
 class DifficultyView(arcade.View):
-    """Uses the arcade.View and shows how to integrate UIManager."""
+    """View for select the difficulty."""
 
     def __init__(self) -> None:
         super().__init__()
