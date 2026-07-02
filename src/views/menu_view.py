@@ -11,7 +11,7 @@ from utils.get_path import get_complete_path
 
 
 class MenuView(arcade.View):
-    """Uses the arcade.View and shows how to integrate UIManager."""
+    """View for the menu."""
 
     def __init__(self) -> None:
         super().__init__()
