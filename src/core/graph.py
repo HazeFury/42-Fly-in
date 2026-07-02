@@ -1,10 +1,6 @@
+from __future__ import annotations
 from typing import Dict, List
 from utils.models import LevelData
-
-
-# Forward declaration for type hinting since classes reference each other
-class Connection:
-    pass
 
 
 class Hub:

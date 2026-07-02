@@ -41,7 +41,7 @@ class LevelView(arcade.View):
                     text=level,
                     action=lambda current=level: print(maps_registry.get_map(
                         difficulty, current
-                        ).model_dump()
+                        )
                     ),
                     width=350,
                     height=100
