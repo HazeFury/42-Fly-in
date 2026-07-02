@@ -39,7 +39,10 @@ class LevelView(arcade.View):
             for level in levels:
                 button_box.add(Button(
                     text=level,
-                    action=lambda current=level: print(current),
+                    action=lambda current=level: print(maps_registry.get_map(
+                        difficulty, current
+                        ).model_dump()
+                    ),
                     width=350,
                     height=100
                     )
