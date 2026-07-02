@@ -8,10 +8,11 @@ from components.button import Button
 from components.text import Text
 from utils.get_path import get_complete_path
 from core.map_manager import maps_registry
+from views.map_view import MapView
 
 
 class LevelView(arcade.View):
-    """Uses the arcade.View and shows how to integrate UIManager."""
+    """View for select the level."""
 
     def __init__(self, difficulty: str) -> None:
         super().__init__()
@@ -39,10 +40,11 @@ class LevelView(arcade.View):
             for level in levels:
                 button_box.add(Button(
                     text=level,
-                    action=lambda current=level: print(maps_registry.get_map(
+                    action=lambda current=level:
+                    self.window.show_view(MapView(maps_registry.get_map(
                         difficulty, current
                         )
-                    ),
+                    )),
                     width=350,
                     height=100
                     )
