@@ -1,9 +1,5 @@
 import arcade
-from arcade.gui import (
-    UIManager,
-    UIAnchorLayout,
-    UIBoxLayout,
-)
+from arcade.gui import UIManager
 from components.button import Button
 from utils.get_path import get_complete_path
 from utils.models import LevelData
@@ -13,6 +9,7 @@ from utils.map_utils import (
     calculate_scale_factor,
     get_screen_coordinates
 )
+arcade.load_font(":resources:/fonts/ttf/Kenney/Kenney_Pixel.ttf")
 
 
 class MapView(arcade.View):
@@ -37,27 +34,69 @@ class MapView(arcade.View):
         self.scale: float = calculate_scale_factor(
             self.min_x, self.max_x,
             self.min_y, self.max_y,
-            1680, 1050,
+            1920, 1080,
             self.padding
         )
+
+        self.hub_labels: list[arcade.Text] = []
+
+        self.hub_color_data = {
+            "white": arcade.color.WHITE,
+            "green": arcade.color.GREEN,
+            "blue": arcade.color.BLUE,
+            "gold": arcade.color.GOLD,
+            "black": arcade.color.BLACK,
+            "orange": arcade.color.ORANGE,
+            "red": arcade.color.RED,
+            "purple": arcade.color.PURPLE,
+            "maroon": arcade.color.MAROON,
+            "brown": arcade.color.BROWN,
+            "darkred": arcade.color.DARK_RED,
+            "violet": arcade.color.VIOLET,
+            "crimson": arcade.color.CRIMSON,
+            "rainbow": arcade.color.MULBERRY,
+            "cyan": arcade.color.CYAN,
+            "yellow": arcade.color.YELLOW,
+            "lime": arcade.color.LIME,
+            "magenta": arcade.color.MAGENTA,
+        }
+        # self.load_custom_fonts()
+        self.setup()
 
         # --- Assets and UI ---
         background_path = get_complete_path("assets/map.png")
         self.background_texture = arcade.load_texture(background_path)
 
+        from views.difficulty_view import DifficultyView
+
         self.ui = UIManager()
-        # anchor = self.ui.add(UIAnchorLayout())
-        # global_box = UIBoxLayout(space_between=200)
+        self.ui.add(Button(
+            text="exit",
+            scale=0.8,
+            action=lambda: self.window.show_view(DifficultyView()),
+            x=10,
+            y=self.window.height - 50
+        ))
 
-        # from views.menu_view import MenuView
+    def setup(self) -> None:
+        for hub in self.graph_network.hubs.values():
+            screen_x, screen_y = get_screen_coordinates(
+                hub.x, hub.y,
+                self.min_x, self.min_y, self.max_x, self.max_y,
+                self.scale, self.window.width, self.window.height
+            )
 
-        # global_box.add(Button(
-        #     text="Go back to menu",
-        #     scale=1.5,
-        #     action=lambda: self.window.show_view(MenuView())
-        # ))
+            text_position = 30 if hub.x % 2 == 0 else -30
 
-        # anchor.add(global_box)
+            label = arcade.Text(
+                font_name="Kenney Pixel",
+                text=hub.name,
+                x=screen_x,
+                y=screen_y + text_position,
+                color=arcade.color.WHITE,
+                anchor_x="center",
+            )
+            self.hub_labels.append(label)
 
     def on_show_view(self) -> None:
         """Called when the view is shown."""
@@ -108,18 +147,14 @@ class MapView(arcade.View):
 
             # TODO: Customize circle color based on hub.color or hub.zone_type
             arcade.draw_circle_filled(
-                screen_x, screen_y, 25, arcade.color.ARSENIC
+                screen_x, screen_y, 10, self.hub_color_data.get(
+                    hub.color, arcade.color.BLACK
+                    )
                 )
 
             # TODO: Draw hub details (name, max_drones)
-            arcade.draw_text(
-                hub.name,
-                screen_x,
-                screen_y + 30,
-                arcade.color.WHITE,
-                anchor_x="center",
-                font_size=12
-            )
+            for label in self.hub_labels:
+                label.draw()
 
         # 4. Draw UI elements (buttons)
         self.ui.draw()

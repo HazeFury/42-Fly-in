@@ -98,7 +98,7 @@ class MenuView(arcade.View):
         arcade.draw_texture_rect(
             texture=self.forty_two,
             rect=arcade.rect.XYWH(
-                1620,
+                1850,
                 70,
                 100,
                 100
