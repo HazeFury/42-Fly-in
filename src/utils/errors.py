@@ -13,6 +13,6 @@ class ParseError(Exception):
         super().__init__(
              "\033[91m[LOCATION]\033[0m Error detected at line"
              f" : \033[93m{self.line_number}\033[0m:\n"
-             f"\033[91m[CAUSE]\033[0m {self.message}\n\n"
+             f"\033[91m[REASON]\033[0m {self.message}\n\n"
              "\033[94m==== EXITING PROGRAM ====\033[0m"
             )

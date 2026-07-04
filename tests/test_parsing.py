@@ -337,3 +337,19 @@ def test_strict_invalid_zone_type_raises_error(tmp_path: Path) -> None:
     with pytest.raises((ParseError, ValidationError)):
         raw_data = parse_map_file(str(test_file))
         LevelData.model_validate(raw_data)
+
+
+def test_metadata_unique_word_raises_error(tmp_path: Path) -> None:
+    """
+    Test that a unique word in metadata is rejected.
+    """
+    map_content = (
+        "nb_drones: 2\n"
+        "start_hub: start 0 0 [toto]\n"  # 'toto' is not valid
+        "end_hub: goal 10 10\n"
+    )
+    test_file = tmp_path / "unknown_meta.txt"
+    test_file.write_text(map_content)
+
+    with pytest.raises(ParseError):
+        parse_map_file(str(test_file))
