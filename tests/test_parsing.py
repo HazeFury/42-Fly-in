@@ -159,3 +159,270 @@ def test_pydantic_invalid_zone_type(tmp_path: Path) -> None:
 
     assert "Input should be 'normal', 'blocked',"
     "'restricted' or 'priority'" in str(exc_info.value)
+
+
+def test_invalid_element_order_raises_error(tmp_path: Path) -> None:
+    """
+    Test that the parser enforces the order: nb_drones, hubs, connections.
+    """
+    map_content = (
+        "start_hub: start 0 0\n"
+        "nb_drones: 2\n"  # Should be at the very top
+        "end_hub: goal 10 10\n"
+    )
+    test_file = tmp_path / "order_map.txt"
+    test_file.write_text(map_content)
+
+    with pytest.raises(ParseError) as exc_info:
+        parse_map_file(str(test_file))
+    assert "order" in str(exc_info.value).lower()
+
+
+def test_negative_nb_drones_raises_error(tmp_path: Path) -> None:
+    """
+    Test that a negative number of drones is rejected.
+    """
+    map_content = (
+        "nb_drones: -5\n"
+        "start_hub: start 0 0\n"
+        "end_hub: goal 10 10\n"
+    )
+    test_file = tmp_path / "negative_drones.txt"
+    test_file.write_text(map_content)
+
+    # Could be ParseError or ValidationError depending on implementation
+    with pytest.raises((ParseError, ValidationError)):
+        raw_data = parse_map_file(str(test_file))
+        LevelData.model_validate(raw_data)
+
+
+def test_duplicate_hub_names_raises_error(tmp_path: Path) -> None:
+    """
+    Test that declaring two hubs with the exact same name is forbidden.
+    """
+    map_content = (
+        "nb_drones: 2\n"
+        "start_hub: my_hub 0 0\n"
+        "hub: my_hub 1 1\n"  # Duplicate name
+        "end_hub: goal 10 10\n"
+    )
+    test_file = tmp_path / "dup_hub_name.txt"
+    test_file.write_text(map_content)
+
+    with pytest.raises(ValidationError) as exc_info:
+        raw_data = parse_map_file(str(test_file))
+        LevelData.model_validate(raw_data)
+    assert "duplicate" in str(exc_info.value).lower()
+
+
+def test_duplicate_hub_coordinates_raises_error(tmp_path: Path) -> None:
+    """
+    Test that two hubs cannot share the exact same X and Y coordinates.
+    """
+    map_content = (
+        "nb_drones: 2\n"
+        "start_hub: start 0 0\n"
+        "hub: mid_zone 0 0\n"  # Duplicate coordinates
+        "end_hub: goal 10 10\n"
+    )
+    test_file = tmp_path / "dup_hub_coords.txt"
+    test_file.write_text(map_content)
+
+    with pytest.raises(ValidationError):
+        raw_data = parse_map_file(str(test_file))
+        LevelData.model_validate(raw_data)
+
+
+def test_connection_with_unknown_hub_raises_error(tmp_path: Path) -> None:
+    """
+    Test that creating a connection with a hub that doesn't exist
+    raises an error.
+    """
+    map_content = (
+        "nb_drones: 2\n"
+        "start_hub: start 0 0\n"
+        "end_hub: goal 10 10\n"
+        "connection: start-ghost_hub\n"  # ghost_hub is never defined
+    )
+    test_file = tmp_path / "unknown_hub_conn.txt"
+    test_file.write_text(map_content)
+
+    with pytest.raises(ValidationError):
+        raw_data = parse_map_file(str(test_file))
+        LevelData.model_validate(raw_data)
+
+
+def test_duplicate_bidirectional_connections_raises_error(
+        tmp_path: Path
+        ) -> None:
+    """
+    Test that identical connections (a-b and b-a) are flagged as duplicates.
+    """
+    map_content = (
+        "nb_drones: 2\n"
+        "start_hub: start 0 0\n"
+        "end_hub: goal 10 10\n"
+        "connection: start-goal\n"
+        "connection: goal-start\n"  # Duplicate in reverse
+    )
+    test_file = tmp_path / "dup_connections.txt"
+    test_file.write_text(map_content)
+
+    with pytest.raises(ValidationError):
+        raw_data = parse_map_file(str(test_file))
+        LevelData.model_validate(raw_data)
+
+
+def test_metadata_unknown_key_raises_error(tmp_path: Path) -> None:
+    """
+    Test that unsupported metadata keys are rejected.
+    """
+    map_content = (
+        "nb_drones: 2\n"
+        "start_hub: start 0 0 [magic=true]\n"  # 'magic' is not a valid key
+        "end_hub: goal 10 10\n"
+    )
+    test_file = tmp_path / "unknown_meta.txt"
+    test_file.write_text(map_content)
+
+    with pytest.raises(ParseError):
+        parse_map_file(str(test_file))
+
+
+def test_metadata_duplicate_key_raises_error(tmp_path: Path) -> None:
+    """
+    Test that the same metadata key cannot be defined twice in the same block.
+    """
+    map_content = (
+        "nb_drones: 2\n"
+        "start_hub: start 0 0 [color=red color=blue]\n"
+        "end_hub: goal 10 10\n"
+    )
+    test_file = tmp_path / "dup_meta_key.txt"
+    test_file.write_text(map_content)
+
+    with pytest.raises(ParseError):
+        parse_map_file(str(test_file))
+
+
+def test_multiple_metadata_brackets_raises_error(tmp_path: Path) -> None:
+    """
+    Test that having more than one set of brackets on a single line is invalid.
+    """
+    map_content = (
+        "nb_drones: 2\n"
+        "start_hub: start 0 0 [color=red] [zone=normal]\n"
+        "end_hub: goal 10 10\n"
+    )
+    test_file = tmp_path / "multiple_brackets.txt"
+    test_file.write_text(map_content)
+
+    with pytest.raises(ParseError):
+        parse_map_file(str(test_file))
+
+
+def test_strict_invalid_zone_type_raises_error(tmp_path: Path) -> None:
+    """
+    Test that an invalid zone type raises a parsing error as required.
+    """
+    map_content = (
+        "nb_drones: 2\n"
+        "start_hub: start 0 0\n"
+        "hub: mid 1 1 [zone=swamp]\n"  # 'swamp' is not allowed
+        "end_hub: goal 10 10\n"
+    )
+    test_file = tmp_path / "invalid_zone_type.txt"
+    test_file.write_text(map_content)
+
+    with pytest.raises((ParseError, ValidationError)):
+        raw_data = parse_map_file(str(test_file))
+        LevelData.model_validate(raw_data)
+
+
+def test_metadata_unique_word_raises_error(tmp_path: Path) -> None:
+    """
+    Test that a unique word in metadata is rejected.
+    """
+    map_content = (
+        "nb_drones: 2\n"
+        "start_hub: start 0 0 [toto]\n"  # 'toto' is not valid
+        "end_hub: goal 10 10\n"
+    )
+    test_file = tmp_path / "unknown_meta.txt"
+    test_file.write_text(map_content)
+
+    with pytest.raises(ParseError):
+        parse_map_file(str(test_file))
+
+
+def test_hub_metadata_in_connection_raises_error(tmp_path: Path) -> None:
+    """
+    Test that a unique word in metadata is rejected.
+    """
+    map_content = (
+       "nb_drones: 2\n"
+
+       "start_hub: start 0 0 [color=green]\n"
+       "hub: waypoint1 1 0 [color=blue]\n"
+       "hub: waypoint2 2 0 [color=blue]\n"
+       "end_hub: goal 3 0 [color=red]\n"
+
+       "connection: start-waypoint1 [max_drones=5]\n"
+       "connection: waypoint1-waypoint2\n"
+       "connection: waypoint2-goal\n"
+
+    )
+    test_file = tmp_path / "swap_meta.txt"
+    test_file.write_text(map_content)
+
+    with pytest.raises(ParseError):
+        parse_map_file(str(test_file))
+
+
+def test_connection_metadata_in_hub_raises_error(tmp_path: Path) -> None:
+    """
+    Test that a unique word in metadata is rejected.
+    """
+    map_content = (
+       "nb_drones: 2\n"
+
+       "start_hub: start 0 0 [color=green max_link_capacity=4]\n"
+       "hub: waypoint1 1 0 [color=blue]\n"
+       "hub: waypoint2 2 0 [color=blue]\n"
+       "end_hub: goal 3 0 [color=red]\n"
+
+       "connection: start-waypoint1\n"
+       "connection: waypoint1-waypoint2\n"
+       "connection: waypoint2-goal\n"
+
+    )
+    test_file = tmp_path / "swap_meta.txt"
+    test_file.write_text(map_content)
+
+    with pytest.raises(ParseError):
+        parse_map_file(str(test_file))
+
+
+def test_case_sensivity_hub_name_raises_error(tmp_path: Path) -> None:
+    """
+    Test that a unique word in metadata is rejected.
+    """
+    map_content = (
+       "nb_drones: 2\n"
+
+       "start_hub: start 0 0 [color=green max_link_capacity=4]\n"
+       "hub: waypoint1 1 0 [color=blue]\n"
+       "hub: waypoint2 2 0 [color=blue]\n"
+       "hub: Waypoint2 4 0 [color=blue]\n"
+       "end_hub: goal 3 0 [color=red]\n"
+
+       "connection: start-waypoint1\n"
+       "connection: waypoint1-waypoint2\n"
+       "connection: waypoint2-goal\n"
+
+    )
+    test_file = tmp_path / "swap_meta.txt"
+    test_file.write_text(map_content)
+
+    with pytest.raises(ParseError):
+        parse_map_file(str(test_file))

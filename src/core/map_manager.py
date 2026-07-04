@@ -1,4 +1,8 @@
+import sys
 from typing import Dict, Optional
+
+from pydantic import ValidationError
+from utils.errors import ParseError
 from utils.models import LevelData
 from utils.parser import parse_map_file
 from utils.get_path import get_complete_path
@@ -21,35 +25,50 @@ class MapManager:
 
     def load_all_maps(self) -> None:
         """
-        Discovers, parses, and validates all .txt map files under the maps
-        directory. Categories are automatically determined based on
-        subfolder names.
+        Discovers, parses, and validates all .txt map files.
         """
         maps_dir = get_complete_path("maps")
 
         if not maps_dir.exists():
             raise FileNotFoundError(f"Maps directory not found at: {maps_dir}")
 
-        # rglob searches recursively for all matching files
         for file_path in maps_dir.rglob("*.txt"):
             difficulty = file_path.parent.name
 
-            # Ensure the folder name corresponds to a valid difficulty level
             if difficulty in self._maps:
                 try:
-                    # 1. Parse into a raw dictionary using regex
                     raw_data = parse_map_file(str(file_path))
-
-                    # 2. Validate and convert to Pydantic object
-                    # Using model_validate resolves mypy typing conflicts
                     level_data = LevelData.model_validate(raw_data)
-
-                    # 3. Cache the object using its clean level name as the key
                     self._maps[difficulty][level_data.level_name] = level_data
 
+                except ValidationError as e:
+                    print("\033[91m[ERROR]\033[0m Failed to load the file : "
+                          f"'\033[93m{file_path.name}\033[0m'\n")
+
+                    for error in e.errors():
+                        raw_msg = error.get("msg", "Unknown validation error")
+
+                        if raw_msg.startswith("Value error, "):
+                            raw_msg = raw_msg.replace("Value error, ", "", 1)
+
+                        clean_messages = raw_msg.split("\n")
+
+                        for i, msg in enumerate(clean_messages):
+                            print(f"\033[91m[REASON {i + 1}]\033[0m {msg}")
+
+                    print("\n\033[94m==== EXITING PROGRAM ====\033[0m")
+                    sys.exit(1)
+
+                except ParseError as e:
+                    print("\033[91m[ERROR]\033[0m Failed to load the file : "
+                          f"'\033[93m{file_path.name}\033[0m'\n{e}")
+                    sys.exit(1)
+
                 except Exception as e:
-                    print("[ERROR] Failed to load map file "
-                          f"'{file_path.name}': {e}")
+                    print("\033[91m[ERROR]\033[0m Unexpected error\n"
+                          f"\033[91m[REASON]\033[0m {e}\n")
+                    print("\n\033[94m==== EXITING PROGRAM ====\033[0m")
+                    sys.exit(1)
 
     def get_all_maps(self) -> Dict[str, Dict[str, LevelData]]:
         """Retrieves all loaded maps."""

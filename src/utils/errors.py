@@ -11,5 +11,8 @@ class ParseError(Exception):
         self.message = message
         self.line_number = line_number
         super().__init__(
-            f"Parse error at line {self.line_number}: {self.message}"
+             "\033[91m[LOCATION]\033[0m Error detected at line"
+             f" : \033[93m{self.line_number}\033[0m:\n"
+             f"\033[91m[REASON]\033[0m {self.message}\n\n"
+             "\033[94m==== EXITING PROGRAM ====\033[0m"
             )
