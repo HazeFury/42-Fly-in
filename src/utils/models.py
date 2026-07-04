@@ -68,14 +68,17 @@ class LevelData(BaseModel):
                 f"and one end_hub (found {end_count})."
             )
 
-        seen_names: set[str] = set()
+        seen_names_lower: set[str] = set()
         seen_coords: set[tuple[int, int]] = set()
 
         for z in self.zones:
-            if z.name in seen_names:
-                errors.append("Duplicate hub name detected: "
-                              f"'\033[93m{z.name}\033[0m'")
-            seen_names.add(z.name)
+            name_lower = z.name.lower()
+            if name_lower in seen_names_lower:
+                errors.append(
+                    "Duplicate hub name detected (case-insensitive): "
+                    f"'\033[93m{z.name}\033[0m'"
+                )
+            seen_names_lower.add(name_lower)
 
             coords = (z.x, z.y)
             if coords in seen_coords:
@@ -107,7 +110,13 @@ class LevelData(BaseModel):
                     f"'\033[93m{conn.from_hub}\033[0m'"
                 )
 
-            normalized_conn = tuple(sorted([conn.from_hub, conn.to_hub]))
+            # Determine the alphabetical order of the two hubs
+            first_hub = min(conn.from_hub, conn.to_hub)
+            second_hub = max(conn.from_hub, conn.to_hub)
+
+            # Create the normalized connection tuple
+            normalized_conn: tuple[str, str] = (first_hub, second_hub)
+
             if normalized_conn in seen_connections:
                 errors.append(
                     f"Duplicate connection detected between "

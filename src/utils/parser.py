@@ -40,11 +40,14 @@ PATTERN_CONNECTION = re.compile(
 PATTERN_META = re.compile(r"^(?P<key>\w+)=(?P<value>[\w-]+)$")
 
 # Strict list of allowed metadata keys according to the subject specifications
-ALLOWED_META_KEYS = {"zone", "color", "max_drones", "max_link_capacity"}
+HUB_META_KEYS = {"zone", "color", "max_drones"}
+CONN_META_KEYS = {"max_link_capacity"}
 
 
 def extract_metadata(
-        meta_string: str | None, line_number: int
+    meta_string: str | None,
+    line_number: int,
+    allowed_keys: set[str]  # New parameter to enforce context
         ) -> dict[str, str]:
     """
     Extracts key-value pairs from a metadata string.
@@ -70,7 +73,7 @@ def extract_metadata(
         key = match.group("key")
         value = match.group("value")
 
-        if key not in ALLOWED_META_KEYS:
+        if key not in allowed_keys:
             raise ParseError(f"Unknown metadata key: "
                              f"'\033[93m{key}\033[0m'", line_number)
 
@@ -153,7 +156,7 @@ def parse_map_file(filepath: str) -> ParsedLevelData:
 
                     zone_dict = match_zone.groupdict()
                     meta_dict = extract_metadata(
-                        zone_dict.pop("meta"), line_number
+                        zone_dict.pop("meta"), line_number, HUB_META_KEYS
                         )
 
                     zone_data = {
@@ -179,7 +182,7 @@ def parse_map_file(filepath: str) -> ParsedLevelData:
 
                     conn_dict = match_connection.groupdict()
                     meta_dict = extract_metadata(
-                        conn_dict.pop("meta"), line_number
+                        conn_dict.pop("meta"), line_number, CONN_META_KEYS
                         )
 
                     conn_data = {
