@@ -28,12 +28,13 @@ def get_bounding_box(hubs: Dict[str, Hub]) -> Tuple[int, int, int, int]:
     return min_x, max_x, min_y, max_y
 
 
-def calculate_scale_factor(
+def calculate_scale_factors(
     min_x: int, max_x: int, min_y: int, max_y: int,
     screen_width: int, screen_height: int, padding: int
-) -> float:
+) -> Tuple[float, float]:
     """
-    Calculates the uniform scale factor to fit the graph within the screen.
+    Calculates independent scale factors for X and Y axes
+    to stretch the graph across the entire available screen space.
     """
     width_range = max(1, max_x - min_x)
     height_range = max(1, max_y - min_y)
@@ -44,27 +45,27 @@ def calculate_scale_factor(
     scale_x = available_width / width_range
     scale_y = available_height / height_range
 
-    return min(scale_x, scale_y)
+    # Return both scales instead of just the minimum
+    return scale_x, scale_y
 
 
 def get_screen_coordinates(
     logical_x: int, logical_y: int,
     min_x: int, min_y: int, max_x: int, max_y: int,
-    scale: float, screen_width: int, screen_height: int
+    scale_x: float, scale_y: float,
+    screen_width: int, screen_height: int
 ) -> Tuple[float, float]:
     """
-    Transforms logical graph coordinates into physical screen pixels,
-    ensuring the entire graph is perfectly centered in the window.
+    Transforms logical graph coordinates into physical screen pixels
+    using independent X and Y scales.
     """
-    # 1. Calculate the logical center of the graph
     logical_center_x = (min_x + max_x) / 2
     logical_center_y = (min_y + max_y) / 2
 
-    # 2. Find the distance from the center and apply the scale
-    offset_x = (logical_x - logical_center_x) * scale
-    offset_y = (logical_y - logical_center_y) * scale
+    # Apply the specific scale to each axis
+    offset_x = (logical_x - logical_center_x) * scale_x
+    offset_y = (logical_y - logical_center_y) * scale_y
 
-    # 3. Project this onto the physical center of the screen
     screen_x = (screen_width / 2) + offset_x
     screen_y = (screen_height / 2) + offset_y
 
