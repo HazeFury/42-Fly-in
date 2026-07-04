@@ -28,7 +28,7 @@ class MapView(arcade.View):
         self.min_x, self.max_x, self.min_y, self.max_y = get_bounding_box(
             self.graph_network.hubs
         )
-        self.is_zooned = True if self.max_x - self.min_x < 16 else False
+        self.is_zoomed = True if self.max_x - self.min_x < 16 else False
         # 2. Calculate the uniform scale factor once
         # Using the constant 1680x1050 defined in your main.py
         self.scale_x, self.scale_y = calculate_scale_factors(
@@ -81,7 +81,6 @@ class MapView(arcade.View):
     def setup(self) -> None:
         """Initialize labels using the non-uniform scale."""
         for hub in self.graph_network.hubs.values():
-            # Pass both self.scale_x and self.scale_y
             screen_x, screen_y = get_screen_coordinates(
                 hub.x, hub.y,
                 self.min_x, self.min_y, self.max_x, self.max_y,
@@ -90,9 +89,9 @@ class MapView(arcade.View):
             )
 
             text_position = 30 if hub.x % 2 == 0 else -30
-            if self.is_zooned and text_position > 0:
+            if self.is_zoomed and text_position > 0:
                 text_position = 45
-            elif self.is_zooned and text_position < 0:
+            elif self.is_zoomed and text_position < 0:
                 text_position = -45
 
             label = arcade.Text(
@@ -102,7 +101,7 @@ class MapView(arcade.View):
                 y=screen_y + text_position,
                 color=arcade.color.WHITE,
                 anchor_x="center",
-                font_size=26 if self.is_zooned else 12
+                font_size=26 if self.is_zoomed else 12
             )
             self.hub_labels.append(label)
 
@@ -159,7 +158,7 @@ class MapView(arcade.View):
 
             # TODO: Customize circle color based on hub.color or hub.zone_type
             arcade.draw_circle_filled(
-                screen_x, screen_y, 20 if self.is_zooned else 12,
+                screen_x, screen_y, 20 if self.is_zoomed else 12,
                 self.hub_color_data.get(
                     hub.color, arcade.color.BLACK
                     )
