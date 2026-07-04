@@ -3,6 +3,7 @@ from typing import Any
 from arcade.gui import UIManager
 from components.button import Button
 from components.visual_hub import VisualHub
+from components.visual_drone import VisualDrone
 from utils.get_path import get_complete_path
 from utils.models import LevelData
 from core.graph import Network
@@ -42,6 +43,18 @@ class MapView(arcade.View):
             self.window.width, self.window.height,
             self.padding
         )
+
+        # 1. Create a SpriteList to manage all drones efficiently
+        self.drone_list = arcade.SpriteList()
+
+        drone_path = get_complete_path("assets/drone.png")
+        self.drone = VisualDrone(drone_path, scale=0.3)
+
+        # Add our single drone to the list (for now)
+        self.drone_list.append(self.drone)
+
+        # 2. Place it on the starting hub
+        self._place_drone_at_start()
 
         # --- Assets and UI ---
         background_path = get_complete_path("assets/map.png")
@@ -98,6 +111,34 @@ class MapView(arcade.View):
             v_hub = VisualHub(hub, screen_x, screen_y, radius, hub_color)
             self.visual_hubs.append(v_hub)
 
+    def _place_drone_at_start(self) -> None:
+        """
+        Finds the start_hub in the parsed data and teleports the drone
+        to its exact screen coordinates.
+        """
+        # Find the starting hub logic object
+        start_hub = next(
+            hub for hub in self.graph_network.hubs.values() if
+            hub.zone_type == "start_hub"
+        )
+
+        screen_x, screen_y = get_screen_coordinates(
+            start_hub.x, start_hub.y,
+            self.min_x, self.min_y, self.max_x, self.max_y,
+            self.scale_x, self.scale_y,
+            self.window.width, self.window.height
+        )
+
+        self.drone.center_x = screen_x
+        self.drone.center_y = screen_y
+
+    def on_update(self, delta_time: float) -> None:
+        """
+        Called 60 times per second to update game logic.
+        """
+        # 3. Feed the real time (delta_time) to the drone's internal timer
+        self.drone_list.update(delta_time)
+
     def on_show_view(self) -> None:
         """Called when the view is shown."""
         self.ui.enable()
@@ -148,5 +189,27 @@ class MapView(arcade.View):
             for label in self.hub_labels:
                 label.draw()
 
-        # 5. Draw UI elements (buttons)
+        # 5. Draw the drone LAST so it appears ON TOP of the hubs and lines
+        self.drone_list.draw()
+
+        # 6. Draw UI elements (buttons)
         self.ui.draw()
+
+    def on_key_press(self, symbol: int, modifiers: int) -> None:
+        """
+        Temporary debug input to test the Lerp movement.
+        """
+        if symbol == arcade.key.SPACE:
+            end_hub = next(
+                hub for hub in self.graph_network.hubs.values() if
+                hub.zone_type == "end_hub"
+            )
+
+            target_x, target_y = get_screen_coordinates(
+                end_hub.x, end_hub.y,
+                self.min_x, self.min_y, self.max_x, self.max_y,
+                self.scale_x, self.scale_y,
+                self.window.width, self.window.height
+            )
+
+            self.drone.move_to(target_x, target_y, travel_time=2.0)
