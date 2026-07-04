@@ -1,5 +1,6 @@
 from typing import Dict, Tuple
 from core.graph import Hub
+import arcade
 
 
 def get_bounding_box(hubs: Dict[str, Hub]) -> Tuple[int, int, int, int]:
@@ -70,3 +71,25 @@ def get_screen_coordinates(
     screen_y = (screen_height / 2) + offset_y
 
     return screen_x, screen_y
+
+
+arcade_color_data = {
+            "white": arcade.color.WHITE,
+            "green": arcade.color.GREEN,
+            "blue": arcade.color.BLUE,
+            "gold": arcade.color.GOLD,
+            "black": arcade.color.BLACK,
+            "orange": arcade.color.ORANGE,
+            "red": arcade.color.RED,
+            "purple": arcade.color.PURPLE,
+            "maroon": arcade.color.MAROON,
+            "brown": arcade.color.BROWN,
+            "darkred": arcade.color.DARK_RED,
+            "violet": arcade.color.VIOLET,
+            "crimson": arcade.color.CRIMSON,
+            "rainbow": arcade.color.MULBERRY,
+            "cyan": arcade.color.CYAN,
+            "yellow": arcade.color.YELLOW,
+            "lime": arcade.color.LIME,
+            "magenta": arcade.color.MAGENTA,
+        }
