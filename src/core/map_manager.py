@@ -1,3 +1,4 @@
+import sys
 from typing import Dict, Optional
 from utils.models import LevelData
 from utils.parser import parse_map_file
@@ -48,8 +49,9 @@ class MapManager:
                     self._maps[difficulty][level_data.level_name] = level_data
 
                 except Exception as e:
-                    print("[ERROR] Failed to load map file "
-                          f"'{file_path.name}': {e}")
+                    print("\033[91m[ERROR]\033[0m Failed to load the file : "
+                          f"'\033[93m{file_path.name}\033[0m'\n{e}")
+                    sys.exit(1)
 
     def get_all_maps(self) -> Dict[str, Dict[str, LevelData]]:
         """Retrieves all loaded maps."""
