@@ -38,17 +38,20 @@ class LevelView(arcade.View):
                 )
 
             for level in levels:
-                button_box.add(Button(
-                    text=level,
-                    action=lambda current=level:
-                    self.window.show_view(MapView(maps_registry.get_map(
-                        difficulty, current
+                # 1. Fetch the data outside the lambda
+                level_data = maps_registry.get_map(difficulty, level)
+
+                if level_data is not None:
+                    button_box.add(Button(
+                        text=level,
+
+                        action=lambda current_data=level_data:
+                            self.window.show_view(MapView(current_data)),
+                        width=350,
+                        height=100
                         )
-                    )),
-                    width=350,
-                    height=100
                     )
-                )
+
             global_box.add(final_text)
             global_box.add(button_box)
 

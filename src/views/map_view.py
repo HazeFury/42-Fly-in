@@ -1,4 +1,5 @@
 import arcade
+from typing import Any
 from arcade.gui import UIManager
 from components.button import Button
 from components.visual_hub import VisualHub
@@ -24,7 +25,7 @@ class MapView(arcade.View):
         self.graph_network = Network(level_data)
         self.hub_labels: list[arcade.Text] = []
         self.visual_hubs: list[VisualHub] = []
-        self.hub_color_data = arcade_color_data
+        self.hub_color_data: dict[str, Any] = arcade_color_data
 
         # --- Map Scaling Initialization ---
         self.padding: int = 200
@@ -88,7 +89,11 @@ class MapView(arcade.View):
 
             # ---- Logic for hub circle ----
             radius = 20 if self.is_zoomed else 12
-            hub_color = self.hub_color_data.get(hub.color, arcade.color.BLACK)
+            hub_color = (
+                self.hub_color_data.get(hub.color, arcade.color.BLACK)
+                if hub.color is not None
+                else arcade.color.BLACK
+            )
 
             v_hub = VisualHub(hub, screen_x, screen_y, radius, hub_color)
             self.visual_hubs.append(v_hub)
