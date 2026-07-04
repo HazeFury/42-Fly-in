@@ -6,7 +6,7 @@ from utils.models import LevelData
 from core.graph import Network
 from utils.map_utils import (
     get_bounding_box,
-    calculate_scale_factor,
+    calculate_scale_factors,
     get_screen_coordinates
 )
 arcade.load_font(":resources:/fonts/ttf/Kenney/Kenney_Pixel.ttf")
@@ -28,13 +28,13 @@ class MapView(arcade.View):
         self.min_x, self.max_x, self.min_y, self.max_y = get_bounding_box(
             self.graph_network.hubs
         )
-
+        self.is_zooned = True if self.max_x - self.min_x < 16 else False
         # 2. Calculate the uniform scale factor once
         # Using the constant 1680x1050 defined in your main.py
-        self.scale: float = calculate_scale_factor(
+        self.scale_x, self.scale_y = calculate_scale_factors(
             self.min_x, self.max_x,
             self.min_y, self.max_y,
-            1920, 1080,
+            self.window.width, self.window.height,
             self.padding
         )
 
@@ -79,14 +79,21 @@ class MapView(arcade.View):
         ))
 
     def setup(self) -> None:
+        """Initialize labels using the non-uniform scale."""
         for hub in self.graph_network.hubs.values():
+            # Pass both self.scale_x and self.scale_y
             screen_x, screen_y = get_screen_coordinates(
                 hub.x, hub.y,
                 self.min_x, self.min_y, self.max_x, self.max_y,
-                self.scale, self.window.width, self.window.height
+                self.scale_x, self.scale_y,
+                self.window.width, self.window.height
             )
 
             text_position = 30 if hub.x % 2 == 0 else -30
+            if self.is_zooned and text_position > 0:
+                text_position = 45
+            elif self.is_zooned and text_position < 0:
+                text_position = -45
 
             label = arcade.Text(
                 font_name="Kenney Pixel",
@@ -95,6 +102,7 @@ class MapView(arcade.View):
                 y=screen_y + text_position,
                 color=arcade.color.WHITE,
                 anchor_x="center",
+                font_size=26 if self.is_zooned else 12
             )
             self.hub_labels.append(label)
 
@@ -123,31 +131,36 @@ class MapView(arcade.View):
 
         # 2. Draw Connections (behind the hubs)
         for connection in self.graph_network.connections:
+            # Pass both self.scale_x and self.scale_y
             x1, y1 = get_screen_coordinates(
                 connection.hub_a.x, connection.hub_a.y,
                 self.min_x, self.min_y, self.max_x, self.max_y,
-                self.scale, self.window.width, self.window.height
+                self.scale_x, self.scale_y,
+                self.window.width, self.window.height
             )
             x2, y2 = get_screen_coordinates(
                 connection.hub_b.x, connection.hub_b.y,
                 self.min_x, self.min_y, self.max_x, self.max_y,
-                self.scale, self.window.width, self.window.height
+                self.scale_x, self.scale_y,
+                self.window.width, self.window.height
             )
 
-            # TODO: Customize line thickness/color based on connection.capacity
-            arcade.draw_line(x1, y1, x2, y2, arcade.color.WHITE, line_width=2)
+            # Draw the line
+            arcade.draw_line(x1, y1, x2, y2, arcade.color.BLACK, line_width=2)
 
         # 3. Draw Hubs (on top of connections)
         for hub in self.graph_network.hubs.values():
             screen_x, screen_y = get_screen_coordinates(
                 hub.x, hub.y,
                 self.min_x, self.min_y, self.max_x, self.max_y,
-                self.scale, self.window.width, self.window.height
+                self.scale_x, self.scale_y,
+                self.window.width, self.window.height
             )
 
             # TODO: Customize circle color based on hub.color or hub.zone_type
             arcade.draw_circle_filled(
-                screen_x, screen_y, 10, self.hub_color_data.get(
+                screen_x, screen_y, 20 if self.is_zooned else 12,
+                self.hub_color_data.get(
                     hub.color, arcade.color.BLACK
                     )
                 )
