@@ -1,9 +1,11 @@
 import arcade
 from arcade.gui import UIManager
 from components.button import Button
+from components.visual_hub import VisualHub
 from utils.get_path import get_complete_path
 from utils.models import LevelData
 from core.graph import Network
+from utils.map_utils import arcade_color_data
 from utils.map_utils import (
     get_bounding_box,
     calculate_scale_factors,
@@ -20,6 +22,9 @@ class MapView(arcade.View):
 
         # Instantiate the graph logic
         self.graph_network = Network(level_data)
+        self.hub_labels: list[arcade.Text] = []
+        self.visual_hubs: list[VisualHub] = []
+        self.hub_color_data = arcade_color_data
 
         # --- Map Scaling Initialization ---
         self.padding: int = 200
@@ -30,38 +35,12 @@ class MapView(arcade.View):
         )
         self.is_zoomed = True if self.max_x - self.min_x < 16 else False
         # 2. Calculate the uniform scale factor once
-        # Using the constant 1680x1050 defined in your main.py
         self.scale_x, self.scale_y = calculate_scale_factors(
             self.min_x, self.max_x,
             self.min_y, self.max_y,
             self.window.width, self.window.height,
             self.padding
         )
-
-        self.hub_labels: list[arcade.Text] = []
-
-        self.hub_color_data = {
-            "white": arcade.color.WHITE,
-            "green": arcade.color.GREEN,
-            "blue": arcade.color.BLUE,
-            "gold": arcade.color.GOLD,
-            "black": arcade.color.BLACK,
-            "orange": arcade.color.ORANGE,
-            "red": arcade.color.RED,
-            "purple": arcade.color.PURPLE,
-            "maroon": arcade.color.MAROON,
-            "brown": arcade.color.BROWN,
-            "darkred": arcade.color.DARK_RED,
-            "violet": arcade.color.VIOLET,
-            "crimson": arcade.color.CRIMSON,
-            "rainbow": arcade.color.MULBERRY,
-            "cyan": arcade.color.CYAN,
-            "yellow": arcade.color.YELLOW,
-            "lime": arcade.color.LIME,
-            "magenta": arcade.color.MAGENTA,
-        }
-        # self.load_custom_fonts()
-        self.setup()
 
         # --- Assets and UI ---
         background_path = get_complete_path("assets/map.png")
@@ -77,6 +56,7 @@ class MapView(arcade.View):
             x=10,
             y=self.window.height - 50
         ))
+        self.setup()
 
     def setup(self) -> None:
         """Initialize labels using the non-uniform scale."""
@@ -88,6 +68,7 @@ class MapView(arcade.View):
                 self.window.width, self.window.height
             )
 
+            # ---- Logic for text label ----
             text_position = 30 if hub.x % 2 == 0 else -30
             if self.is_zoomed and text_position > 0:
                 text_position = 45
@@ -104,6 +85,13 @@ class MapView(arcade.View):
                 font_size=26 if self.is_zoomed else 12
             )
             self.hub_labels.append(label)
+
+            # ---- Logic for hub circle ----
+            radius = 20 if self.is_zoomed else 12
+            hub_color = self.hub_color_data.get(hub.color, arcade.color.BLACK)
+
+            v_hub = VisualHub(hub, screen_x, screen_y, radius, hub_color)
+            self.visual_hubs.append(v_hub)
 
     def on_show_view(self) -> None:
         """Called when the view is shown."""
@@ -148,25 +136,12 @@ class MapView(arcade.View):
             arcade.draw_line(x1, y1, x2, y2, arcade.color.BLACK, line_width=2)
 
         # 3. Draw Hubs (on top of connections)
-        for hub in self.graph_network.hubs.values():
-            screen_x, screen_y = get_screen_coordinates(
-                hub.x, hub.y,
-                self.min_x, self.min_y, self.max_x, self.max_y,
-                self.scale_x, self.scale_y,
-                self.window.width, self.window.height
-            )
+        for v_hub in self.visual_hubs:
+            v_hub.draw()
 
-            # TODO: Customize circle color based on hub.color or hub.zone_type
-            arcade.draw_circle_filled(
-                screen_x, screen_y, 20 if self.is_zoomed else 12,
-                self.hub_color_data.get(
-                    hub.color, arcade.color.BLACK
-                    )
-                )
-
-            # TODO: Draw hub details (name, max_drones)
+        # 4. Draw hub details (name, max_drones)
             for label in self.hub_labels:
                 label.draw()
 
-        # 4. Draw UI elements (buttons)
+        # 5. Draw UI elements (buttons)
         self.ui.draw()
