@@ -353,3 +353,76 @@ def test_metadata_unique_word_raises_error(tmp_path: Path) -> None:
 
     with pytest.raises(ParseError):
         parse_map_file(str(test_file))
+
+
+def test_hub_metadata_in_connection_raises_error(tmp_path: Path) -> None:
+    """
+    Test that a unique word in metadata is rejected.
+    """
+    map_content = (
+       "nb_drones: 2\n"
+
+       "start_hub: start 0 0 [color=green]\n"
+       "hub: waypoint1 1 0 [color=blue]\n"
+       "hub: waypoint2 2 0 [color=blue]\n"
+       "end_hub: goal 3 0 [color=red]\n"
+
+       "connection: start-waypoint1 [max_drones=5]\n"
+       "connection: waypoint1-waypoint2\n"
+       "connection: waypoint2-goal\n"
+
+    )
+    test_file = tmp_path / "swap_meta.txt"
+    test_file.write_text(map_content)
+
+    with pytest.raises(ParseError):
+        parse_map_file(str(test_file))
+
+
+def test_connection_metadata_in_hub_raises_error(tmp_path: Path) -> None:
+    """
+    Test that a unique word in metadata is rejected.
+    """
+    map_content = (
+       "nb_drones: 2\n"
+
+       "start_hub: start 0 0 [color=green max_link_capacity=4]\n"
+       "hub: waypoint1 1 0 [color=blue]\n"
+       "hub: waypoint2 2 0 [color=blue]\n"
+       "end_hub: goal 3 0 [color=red]\n"
+
+       "connection: start-waypoint1\n"
+       "connection: waypoint1-waypoint2\n"
+       "connection: waypoint2-goal\n"
+
+    )
+    test_file = tmp_path / "swap_meta.txt"
+    test_file.write_text(map_content)
+
+    with pytest.raises(ParseError):
+        parse_map_file(str(test_file))
+
+
+def test_case_sensivity_hub_name_raises_error(tmp_path: Path) -> None:
+    """
+    Test that a unique word in metadata is rejected.
+    """
+    map_content = (
+       "nb_drones: 2\n"
+
+       "start_hub: start 0 0 [color=green max_link_capacity=4]\n"
+       "hub: waypoint1 1 0 [color=blue]\n"
+       "hub: waypoint2 2 0 [color=blue]\n"
+       "hub: Waypoint2 4 0 [color=blue]\n"
+       "end_hub: goal 3 0 [color=red]\n"
+
+       "connection: start-waypoint1\n"
+       "connection: waypoint1-waypoint2\n"
+       "connection: waypoint2-goal\n"
+
+    )
+    test_file = tmp_path / "swap_meta.txt"
+    test_file.write_text(map_content)
+
+    with pytest.raises(ParseError):
+        parse_map_file(str(test_file))
