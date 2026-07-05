@@ -52,10 +52,10 @@ class MapView(arcade.View):
         )
 
         # 1. Create a SpriteList to manage all drones efficiently
-        self.drone_list = arcade.SpriteList()
+        self.drone_list: arcade.SpriteList[VisualDrone] = arcade.SpriteList()
 
         drone_path = get_complete_path("assets/drone.png")
-        self.drone = VisualDrone(drone_path, scale=0.3)
+        self.drone = VisualDrone(str(drone_path), scale=0.3)
 
         # Add our single drone to the list (for now)
         self.drone_list.append(self.drone)
