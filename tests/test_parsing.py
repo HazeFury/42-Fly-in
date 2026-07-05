@@ -1,9 +1,11 @@
-import pytest
 from pathlib import Path
+
+import pytest
 from pydantic import ValidationError
+
 from utils.errors import ParseError
-from utils.parser import parse_map_file
 from utils.models import LevelData
+from utils.parser import parse_map_file
 
 
 def test_parse_valid_minimal_file(tmp_path: Path) -> None:
@@ -101,11 +103,7 @@ def test_pydantic_validation_missing_start_hub(tmp_path: Path) -> None:
     """
     Test that Pydantic rejects a map missing a start_hub.
     """
-    map_content = (
-        "nb_drones: 2\n"
-        "hub: missing_start 0 0\n"
-        "end_hub: goal 10 10\n"
-    )
+    map_content = "nb_drones: 2\nhub: missing_start 0 0\nend_hub: goal 10 10\n"
     test_file = tmp_path / "missing_start.txt"
     test_file.write_text(map_content)
 
@@ -182,11 +180,7 @@ def test_negative_nb_drones_raises_error(tmp_path: Path) -> None:
     """
     Test that a negative number of drones is rejected.
     """
-    map_content = (
-        "nb_drones: -5\n"
-        "start_hub: start 0 0\n"
-        "end_hub: goal 10 10\n"
-    )
+    map_content = "nb_drones: -5\nstart_hub: start 0 0\nend_hub: goal 10 10\n"
     test_file = tmp_path / "negative_drones.txt"
     test_file.write_text(map_content)
 
@@ -253,8 +247,8 @@ def test_connection_with_unknown_hub_raises_error(tmp_path: Path) -> None:
 
 
 def test_duplicate_bidirectional_connections_raises_error(
-        tmp_path: Path
-        ) -> None:
+    tmp_path: Path,
+) -> None:
     """
     Test that identical connections (a-b and b-a) are flagged as duplicates.
     """
@@ -360,17 +354,14 @@ def test_hub_metadata_in_connection_raises_error(tmp_path: Path) -> None:
     Test that a unique word in metadata is rejected.
     """
     map_content = (
-       "nb_drones: 2\n"
-
-       "start_hub: start 0 0 [color=green]\n"
-       "hub: waypoint1 1 0 [color=blue]\n"
-       "hub: waypoint2 2 0 [color=blue]\n"
-       "end_hub: goal 3 0 [color=red]\n"
-
-       "connection: start-waypoint1 [max_drones=5]\n"
-       "connection: waypoint1-waypoint2\n"
-       "connection: waypoint2-goal\n"
-
+        "nb_drones: 2\n"
+        "start_hub: start 0 0 [color=green]\n"
+        "hub: waypoint1 1 0 [color=blue]\n"
+        "hub: waypoint2 2 0 [color=blue]\n"
+        "end_hub: goal 3 0 [color=red]\n"
+        "connection: start-waypoint1 [max_drones=5]\n"
+        "connection: waypoint1-waypoint2\n"
+        "connection: waypoint2-goal\n"
     )
     test_file = tmp_path / "swap_meta.txt"
     test_file.write_text(map_content)
@@ -384,17 +375,14 @@ def test_connection_metadata_in_hub_raises_error(tmp_path: Path) -> None:
     Test that a unique word in metadata is rejected.
     """
     map_content = (
-       "nb_drones: 2\n"
-
-       "start_hub: start 0 0 [color=green max_link_capacity=4]\n"
-       "hub: waypoint1 1 0 [color=blue]\n"
-       "hub: waypoint2 2 0 [color=blue]\n"
-       "end_hub: goal 3 0 [color=red]\n"
-
-       "connection: start-waypoint1\n"
-       "connection: waypoint1-waypoint2\n"
-       "connection: waypoint2-goal\n"
-
+        "nb_drones: 2\n"
+        "start_hub: start 0 0 [color=green max_link_capacity=4]\n"
+        "hub: waypoint1 1 0 [color=blue]\n"
+        "hub: waypoint2 2 0 [color=blue]\n"
+        "end_hub: goal 3 0 [color=red]\n"
+        "connection: start-waypoint1\n"
+        "connection: waypoint1-waypoint2\n"
+        "connection: waypoint2-goal\n"
     )
     test_file = tmp_path / "swap_meta.txt"
     test_file.write_text(map_content)
@@ -408,18 +396,15 @@ def test_case_sensivity_hub_name_raises_error(tmp_path: Path) -> None:
     Test that a unique word in metadata is rejected.
     """
     map_content = (
-       "nb_drones: 2\n"
-
-       "start_hub: start 0 0 [color=green max_link_capacity=4]\n"
-       "hub: waypoint1 1 0 [color=blue]\n"
-       "hub: waypoint2 2 0 [color=blue]\n"
-       "hub: Waypoint2 4 0 [color=blue]\n"
-       "end_hub: goal 3 0 [color=red]\n"
-
-       "connection: start-waypoint1\n"
-       "connection: waypoint1-waypoint2\n"
-       "connection: waypoint2-goal\n"
-
+        "nb_drones: 2\n"
+        "start_hub: start 0 0 [color=green max_link_capacity=4]\n"
+        "hub: waypoint1 1 0 [color=blue]\n"
+        "hub: waypoint2 2 0 [color=blue]\n"
+        "hub: Waypoint2 4 0 [color=blue]\n"
+        "end_hub: goal 3 0 [color=red]\n"
+        "connection: start-waypoint1\n"
+        "connection: waypoint1-waypoint2\n"
+        "connection: waypoint2-goal\n"
     )
     test_file = tmp_path / "swap_meta.txt"
     test_file.write_text(map_content)

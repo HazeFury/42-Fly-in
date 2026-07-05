@@ -6,6 +6,7 @@ class VisualDrone(arcade.Sprite):
     A dumb visual component that smoothly animates from point A to point B
     using linear interpolation (Lerp), independent of the frame rate.
     """
+
     def __init__(self, image_path: str, scale: float = 1.0) -> None:
         super().__init__(image_path, scale)
 
@@ -22,8 +23,8 @@ class VisualDrone(arcade.Sprite):
         self.target_y: float = 0.0
 
     def move_to(
-            self, target_x: float, target_y: float, travel_time: float = 1.0
-            ) -> None:
+        self, target_x: float, target_y: float, travel_time: float = 1.0
+    ) -> None:
         """
         Orders the sprite to move to a new location.
         """
@@ -55,7 +56,9 @@ class VisualDrone(arcade.Sprite):
             self.is_moving = False
 
         # Apply the Lerp formula for X and Y axes
-        self.center_x = \
+        self.center_x = (
             self.start_x + (self.target_x - self.start_x) * self.progress
-        self.center_y = \
+        )
+        self.center_y = (
             self.start_y + (self.target_y - self.start_y) * self.progress
+        )

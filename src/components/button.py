@@ -1,6 +1,7 @@
+from typing import Any, Callable
+
 import arcade
-from arcade.gui import UITextureButton, UIOnClickEvent
-from typing import Callable, Any
+from arcade.gui import UIOnClickEvent, UITextureButton
 
 # Preload textures, because they are mostly used multiple times,so they are not
 # loaded multiple times
@@ -30,7 +31,8 @@ class Button(UITextureButton):
             texture=TEX_RED_BUTTON_NORMAL,
             texture_hovered=TEX_RED_BUTTON_HOVER,
             texture_pressed=TEX_RED_BUTTON_PRESS,
-            **kwargs)
+            **kwargs,
+        )
 
         @self.event("on_click")
         def on_click(event: UIOnClickEvent) -> None:
