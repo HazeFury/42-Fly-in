@@ -1,18 +1,22 @@
-import arcade
 from typing import Any
+
+import arcade
 from arcade.gui import UIManager
+
 from components.button import Button
-from components.visual_hub import VisualHub
 from components.visual_drone import VisualDrone
-from utils.get_path import get_complete_path
-from utils.models import LevelData
+from components.visual_hub import VisualHub
 from core.graph import Network
-from utils.map_utils import arcade_color_data
+from core.pathfinding import calculate_dijkstra_path
+from utils.get_path import get_complete_path
 from utils.map_utils import (
-    get_bounding_box,
+    arcade_color_data,
     calculate_scale_factors,
-    get_screen_coordinates
+    get_bounding_box,
+    get_screen_coordinates,
 )
+from utils.models import LevelData
+
 arcade.load_font(":resources:/fonts/ttf/Kenney/Kenney_Pixel.ttf")
 
 
@@ -38,10 +42,13 @@ class MapView(arcade.View):
         self.is_zoomed = True if self.max_x - self.min_x < 16 else False
         # 2. Calculate the uniform scale factor once
         self.scale_x, self.scale_y = calculate_scale_factors(
-            self.min_x, self.max_x,
-            self.min_y, self.max_y,
-            self.window.width, self.window.height,
-            self.padding
+            self.min_x,
+            self.max_x,
+            self.min_y,
+            self.max_y,
+            self.window.width,
+            self.window.height,
+            self.padding,
         )
 
         # 1. Create a SpriteList to manage all drones efficiently
@@ -63,23 +70,37 @@ class MapView(arcade.View):
         from views.difficulty_view import DifficultyView
 
         self.ui = UIManager()
-        self.ui.add(Button(
-            text="exit",
-            scale=0.8,
-            action=lambda: self.window.show_view(DifficultyView()),
-            x=10,
-            y=self.window.height - 50
-        ))
+        self.ui.add(
+            Button(
+                text="exit",
+                scale=0.8,
+                action=lambda: self.window.show_view(DifficultyView()),
+                x=10,
+                y=self.window.height - 50,
+            )
+        )
         self.setup()
+
+        # #####################################
+        self.optimal_path = calculate_dijkstra_path(
+            self.graph_network, "start", "goal"
+        )
+        print(self.optimal_path)
 
     def setup(self) -> None:
         """Initialize labels using the non-uniform scale."""
         for hub in self.graph_network.hubs.values():
             screen_x, screen_y = get_screen_coordinates(
-                hub.x, hub.y,
-                self.min_x, self.min_y, self.max_x, self.max_y,
-                self.scale_x, self.scale_y,
-                self.window.width, self.window.height
+                hub.x,
+                hub.y,
+                self.min_x,
+                self.min_y,
+                self.max_x,
+                self.max_y,
+                self.scale_x,
+                self.scale_y,
+                self.window.width,
+                self.window.height,
             )
 
             # ---- Logic for text label ----
@@ -96,7 +117,7 @@ class MapView(arcade.View):
                 y=screen_y + text_position,
                 color=arcade.color.WHITE,
                 anchor_x="center",
-                font_size=26 if self.is_zoomed else 12
+                font_size=26 if self.is_zoomed else 12,
             )
             self.hub_labels.append(label)
 
@@ -118,15 +139,22 @@ class MapView(arcade.View):
         """
         # Find the starting hub logic object
         start_hub = next(
-            hub for hub in self.graph_network.hubs.values() if
-            hub.zone_type == "start_hub"
+            hub
+            for hub in self.graph_network.hubs.values()
+            if hub.zone_type == "start_hub"
         )
 
         screen_x, screen_y = get_screen_coordinates(
-            start_hub.x, start_hub.y,
-            self.min_x, self.min_y, self.max_x, self.max_y,
-            self.scale_x, self.scale_y,
-            self.window.width, self.window.height
+            start_hub.x,
+            start_hub.y,
+            self.min_x,
+            self.min_y,
+            self.max_x,
+            self.max_y,
+            self.scale_x,
+            self.scale_y,
+            self.window.width,
+            self.window.height,
         )
 
         self.drone.center_x = screen_x
@@ -158,24 +186,36 @@ class MapView(arcade.View):
                 self.window.width / 2,
                 self.window.height / 2,
                 self.window.width,
-                self.window.height
-            )
+                self.window.height,
+            ),
         )
 
         # 2. Draw Connections (behind the hubs)
         for connection in self.graph_network.connections:
             # Pass both self.scale_x and self.scale_y
             x1, y1 = get_screen_coordinates(
-                connection.hub_a.x, connection.hub_a.y,
-                self.min_x, self.min_y, self.max_x, self.max_y,
-                self.scale_x, self.scale_y,
-                self.window.width, self.window.height
+                connection.hub_a.x,
+                connection.hub_a.y,
+                self.min_x,
+                self.min_y,
+                self.max_x,
+                self.max_y,
+                self.scale_x,
+                self.scale_y,
+                self.window.width,
+                self.window.height,
             )
             x2, y2 = get_screen_coordinates(
-                connection.hub_b.x, connection.hub_b.y,
-                self.min_x, self.min_y, self.max_x, self.max_y,
-                self.scale_x, self.scale_y,
-                self.window.width, self.window.height
+                connection.hub_b.x,
+                connection.hub_b.y,
+                self.min_x,
+                self.min_y,
+                self.max_x,
+                self.max_y,
+                self.scale_x,
+                self.scale_y,
+                self.window.width,
+                self.window.height,
             )
 
             # Draw the line
@@ -185,7 +225,7 @@ class MapView(arcade.View):
         for v_hub in self.visual_hubs:
             v_hub.draw()
 
-        # 4. Draw hub details (name, max_drones)
+            # 4. Draw hub details (name, max_drones)
             for label in self.hub_labels:
                 label.draw()
 
@@ -201,15 +241,22 @@ class MapView(arcade.View):
         """
         if symbol == arcade.key.SPACE:
             end_hub = next(
-                hub for hub in self.graph_network.hubs.values() if
-                hub.zone_type == "end_hub"
+                hub
+                for hub in self.graph_network.hubs.values()
+                if hub.zone_type == "end_hub"
             )
 
             target_x, target_y = get_screen_coordinates(
-                end_hub.x, end_hub.y,
-                self.min_x, self.min_y, self.max_x, self.max_y,
-                self.scale_x, self.scale_y,
-                self.window.width, self.window.height
+                end_hub.x,
+                end_hub.y,
+                self.min_x,
+                self.min_y,
+                self.max_x,
+                self.max_y,
+                self.scale_x,
+                self.scale_y,
+                self.window.width,
+                self.window.height,
             )
 
             self.drone.move_to(target_x, target_y, travel_time=2.0)
