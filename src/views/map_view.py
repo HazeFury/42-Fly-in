@@ -81,11 +81,14 @@ class MapView(arcade.View):
         )
         self.setup()
 
-        # #####################################
+        # #############################################################
+        # -----------------  DJIKSTRA TEST  ---------------------------
+        start_hub, end_hub = self.graph_network.get_start_and_exit_hub()
         self.optimal_path = calculate_dijkstra_path(
-            self.graph_network, "start", "goal"
+            self.graph_network, start_hub, end_hub
         )
         print(self.optimal_path)
+        # ##############################################################3
 
     def setup(self) -> None:
         """Initialize labels using the non-uniform scale."""
@@ -117,7 +120,7 @@ class MapView(arcade.View):
                 y=screen_y + text_position,
                 color=arcade.color.WHITE,
                 anchor_x="center",
-                font_size=26 if self.is_zoomed else 12,
+                font_size=26 if self.is_zoomed else 16,
             )
             self.hub_labels.append(label)
 
@@ -194,8 +197,8 @@ class MapView(arcade.View):
         for connection in self.graph_network.connections:
             # Pass both self.scale_x and self.scale_y
             x1, y1 = get_screen_coordinates(
-                connection.hub_a.x,
-                connection.hub_a.y,
+                connection.from_hub.x,
+                connection.from_hub.y,
                 self.min_x,
                 self.min_y,
                 self.max_x,
@@ -206,8 +209,8 @@ class MapView(arcade.View):
                 self.window.height,
             )
             x2, y2 = get_screen_coordinates(
-                connection.hub_b.x,
-                connection.hub_b.y,
+                connection.to_hub.x,
+                connection.to_hub.y,
                 self.min_x,
                 self.min_y,
                 self.max_x,

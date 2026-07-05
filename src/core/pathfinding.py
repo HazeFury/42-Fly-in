@@ -1,25 +1,27 @@
 import heapq
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
+
+from core.graph import Network
 
 
-def build_adjacency_list(graph_network: Any) -> Dict[str, List[str]]:
+def build_adjacency_list(graph_network: Network) -> Dict[str, List[str]]:
     """
     Transforms the raw connections into a fast adjacency list dictionary.
-    Example: {'hub_A': ['hub_B', 'hub_C'], 'hub_B': ['hub_A']}
+    Example: {'from_hub': ['to_hub', 'hub_C'], 'to_hub': ['from_hub']}
     """
     adj_list: Dict[str, List[str]] = {
         hub_name: [] for hub_name in graph_network.hubs.keys()
     }
-
     for conn in graph_network.connections:
-        adj_list[conn.from_hub].append(conn.to_hub)
-        adj_list[conn.to_hub].append(conn.from_hub)
+        # print(conn.from_hub.name)
+        adj_list[conn.from_hub.name].append(conn.to_hub.name)
+        adj_list[conn.to_hub.name].append(conn.from_hub.name)
 
     return adj_list
 
 
 def calculate_dijkstra_path(
-    graph_network: Any, start_hub: str, end_hub: str
+    graph_network: Network, start_hub: str, end_hub: str
 ) -> Optional[List[str]]:
     """
     Calculates the most optimal path using Dijkstra's algorithm, taking
@@ -27,7 +29,7 @@ def calculate_dijkstra_path(
 
     Returns:
         A list of hub names representing the path
-        (e.g., ['start', 'hub_A', 'end']),
+        (e.g., ['start', 'from_hub', 'end']),
         or None if no valid path is found.
     """
     adj_list = build_adjacency_list(graph_network)
@@ -61,15 +63,15 @@ def calculate_dijkstra_path(
 
         # Explore neighbors
         for neighbor in adj_list[current_hub]:
-            neighbor_metadata = graph_network.hubs[neighbor].metadata
+            neighbor_hub = graph_network.hubs[neighbor]
 
             # 1. Absolute wall: do not enter blocked zones
-            if neighbor_metadata.zone == "blocked":
+            if neighbor_hub.access == "blocked":
                 continue
 
             # 2. Determine the movement cost to enter this zone
             # Restricted zones take 2 turns to enter, normal/priority take 1.
-            weight = 2 if neighbor_metadata.zone == "restricted" else 1
+            weight = 2 if neighbor_hub.access == "restricted" else 1
 
             new_cost = current_cost + weight
 
