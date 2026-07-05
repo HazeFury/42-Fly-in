@@ -1,13 +1,14 @@
 import arcade
 from arcade.gui import (
-    UIManager,
     UIAnchorLayout,
     UIBoxLayout,
+    UIManager,
 )
-from views.difficulty_view import DifficultyView
+
 from components.button import Button
 from components.text import Text
 from utils.get_path import get_complete_path
+from views.difficulty_view import DifficultyView
 
 
 class MenuView(arcade.View):
@@ -34,31 +35,27 @@ class MenuView(arcade.View):
         button_box = UIBoxLayout(space_between=150)
 
         base_label = Text(
-            text="Fly-in",
-            font_size=100,
-            text_color=arcade.color.BLACK
+            text="Fly-in", font_size=100, text_color=arcade.color.BLACK
         )
 
         # 2. Chain the wrappers to build the final UI component.
         # This creates nested layers of layout formatting around the text.
-        final_title_widget = (
-            base_label.with_padding(top=40, bottom=40, left=80, right=80)
-            .with_background(texture=self.wood_plank)
-        )
+        final_title_widget = base_label.with_padding(
+            top=40, bottom=40, left=80, right=80
+        ).with_background(texture=self.wood_plank)
 
         button_box.add(final_title_widget)
 
-        button_box.add(Button(
-            text="Play",
-            action=lambda: self.window.show_view(DifficultyView()),
-            scale=2.0
+        button_box.add(
+            Button(
+                text="Play",
+                action=lambda: self.window.show_view(DifficultyView()),
+                scale=2.0,
             )
         )
 
-        button_box.add(Button(
-            text="Exit Game",
-            action=lambda: self.window.close()
-            )
+        button_box.add(
+            Button(text="Exit Game", action=lambda: self.window.close())
         )
 
         anchor.add(button_box)
@@ -81,28 +78,16 @@ class MenuView(arcade.View):
                 self.window.width / 2,
                 self.window.height / 2,
                 self.window.width,
-                self.window.height
-            )
+                self.window.height,
+            ),
         )
 
         arcade.draw_texture_rect(
-            texture=self.logo_texture,
-            rect=arcade.rect.XYWH(
-                70,
-                70,
-                100,
-                100
-            )
+            texture=self.logo_texture, rect=arcade.rect.XYWH(70, 70, 100, 100)
         )
 
         arcade.draw_texture_rect(
-            texture=self.forty_two,
-            rect=arcade.rect.XYWH(
-                1850,
-                70,
-                100,
-                100
-            )
+            texture=self.forty_two, rect=arcade.rect.XYWH(1850, 70, 100, 100)
         )
 
         self.ui.draw()

@@ -1,13 +1,14 @@
 import arcade
 from arcade.gui import (
-    UIManager,
     UIAnchorLayout,
     UIBoxLayout,
+    UIManager,
 )
+
 from components.button import Button
 from components.text import Text
-from utils.get_path import get_complete_path
 from core.map_manager import maps_registry
+from utils.get_path import get_complete_path
 from views.map_view import MapView
 
 
@@ -33,22 +34,23 @@ class LevelView(arcade.View):
 
             final_text = (
                 text.with_padding(all=15)
-                    .with_background(color=arcade.color.LIGHT_BROWN)
-                    .with_border(color=arcade.color.BLACK, width=2)
-                )
+                .with_background(color=arcade.color.LIGHT_BROWN)
+                .with_border(color=arcade.color.BLACK, width=2)
+            )
 
             for level in levels:
                 # 1. Fetch the data outside the lambda
                 level_data = maps_registry.get_map(difficulty, level)
 
                 if level_data is not None:
-                    button_box.add(Button(
-                        text=level,
-
-                        action=lambda current_data=level_data:
-                            self.window.show_view(MapView(current_data)),
-                        width=350,
-                        height=100
+                    button_box.add(
+                        Button(
+                            text=level,
+                            action=lambda current_data=level_data: (
+                                self.window.show_view(MapView(current_data))
+                            ),
+                            width=350,
+                            height=100,
                         )
                     )
 
@@ -65,10 +67,11 @@ class LevelView(arcade.View):
 
         from views.difficulty_view import DifficultyView
 
-        global_box.add(Button(
-            text="Go back",
-            scale=1.5,
-            action=lambda: self.window.show_view(DifficultyView())
+        global_box.add(
+            Button(
+                text="Go back",
+                scale=1.5,
+                action=lambda: self.window.show_view(DifficultyView()),
             )
         )
 
@@ -89,8 +92,8 @@ class LevelView(arcade.View):
                 self.window.width / 2,
                 self.window.height / 2,
                 self.window.width,
-                self.window.height
-            )
+                self.window.height,
+            ),
         )
 
         self.ui.draw()

@@ -1,6 +1,7 @@
 import re
 from pathlib import Path
 from typing import Any, TypedDict
+
 from utils.errors import ParseError
 
 
@@ -9,6 +10,7 @@ class ParsedLevelData(TypedDict):
     Defines the exact structure of the parsed dictionary
     to ensure full type safety with mypy.
     """
+
     level_name: str
     nb_drones: int
     zones: list[dict[str, Any]]
@@ -47,8 +49,8 @@ CONN_META_KEYS = {"max_link_capacity"}
 def extract_metadata(
     meta_string: str | None,
     line_number: int,
-    allowed_keys: set[str]  # New parameter to enforce context
-        ) -> dict[str, str]:
+    allowed_keys: set[str],  # New parameter to enforce context
+) -> dict[str, str]:
     """
     Extracts key-value pairs from a metadata string.
     Raises a ParseError if the format is invalid, or if unknown/duplicate
@@ -66,20 +68,25 @@ def extract_metadata(
         match = PATTERN_META.match(token)
 
         if not match:
-            raise ParseError("Invalid metadata format: "
-                             f"'\033[93m{token}\033[0m'. Expected "
-                             "'\033[92mkey=value\033[0m'.", line_number)
+            raise ParseError(
+                "Invalid metadata format: "
+                f"'\033[93m{token}\033[0m'. Expected "
+                "'\033[92mkey=value\033[0m'.",
+                line_number,
+            )
 
         key = match.group("key")
         value = match.group("value")
 
         if key not in allowed_keys:
-            raise ParseError(f"Unknown metadata key: "
-                             f"'\033[93m{key}\033[0m'", line_number)
+            raise ParseError(
+                f"Unknown metadata key: '\033[93m{key}\033[0m'", line_number
+            )
 
         if key in meta_dict:
-            raise ParseError(f"Duplicate metadata key: "
-                             f"'\033[93m{key}\033[0m'", line_number)
+            raise ParseError(
+                f"Duplicate metadata key: '\033[93m{key}\033[0m'", line_number
+            )
 
         meta_dict[key] = value
 
@@ -103,7 +110,7 @@ def parse_map_file(filepath: str) -> ParsedLevelData:
         "level_name": level_name,
         "nb_drones": 0,
         "zones": [],
-        "connections": []
+        "connections": [],
     }
 
     # State machine to enforce block order:
@@ -113,31 +120,38 @@ def parse_map_file(filepath: str) -> ParsedLevelData:
     state = 0
 
     try:
-        with open(file_path_obj, 'r', encoding='utf-8') as file:
+        with open(file_path_obj, "r", encoding="utf-8") as file:
             for line_number, raw_line in enumerate(file, start=1):
                 line = raw_line.strip()
 
                 # Ignore comments and empty lines
-                if not line or line.startswith('#'):
+                if not line or line.startswith("#"):
                     continue
 
                 # Immediately reject multiple brackets anywhere on the line
-                if line.count('[') > 1 or line.count(']') > 1:
-                    raise ParseError("Multiple metadata brackets are "
-                                     "not allowed.", line_number)
+                if line.count("[") > 1 or line.count("]") > 1:
+                    raise ParseError(
+                        "Multiple metadata brackets are not allowed.",
+                        line_number,
+                    )
 
                 # --- 1. nb_drones validation ---
                 match_drones = PATTERN_DRONES.match(line)
                 if match_drones:
                     if state > 0:
-                        raise ParseError("Invalid order: nb_drones must be"
-                                         " defined at the very top of the "
-                                         "file.", line_number)
+                        raise ParseError(
+                            "Invalid order: nb_drones must be"
+                            " defined at the very top of the "
+                            "file.",
+                            line_number,
+                        )
 
                     count = int(match_drones.group("count"))
                     if count <= 0:
-                        raise ParseError("nb_drones must be a strictly "
-                                         "positive integer.", line_number)
+                        raise ParseError(
+                            "nb_drones must be a strictly positive integer.",
+                            line_number,
+                        )
 
                     parsed_data["nb_drones"] = count
                     state = 1
@@ -147,24 +161,30 @@ def parse_map_file(filepath: str) -> ParsedLevelData:
                 match_zone = PATTERN_ZONE.match(line)
                 if match_zone:
                     if state == 0:
-                        raise ParseError("Invalid order: Hubs must be defined "
-                                         "after nb_drones.", line_number)
+                        raise ParseError(
+                            "Invalid order: Hubs must be defined "
+                            "after nb_drones.",
+                            line_number,
+                        )
                     if state == 2:
-                        raise ParseError("Invalid order: Hubs cannot be "
-                                         "defined after "
-                                         "connections.", line_number)
+                        raise ParseError(
+                            "Invalid order: Hubs cannot be "
+                            "defined after "
+                            "connections.",
+                            line_number,
+                        )
 
                     zone_dict = match_zone.groupdict()
                     meta_dict = extract_metadata(
                         zone_dict.pop("meta"), line_number, HUB_META_KEYS
-                        )
+                    )
 
                     zone_data = {
                         "type": zone_dict["type"],
                         "name": zone_dict["name"],
                         "x": int(zone_dict["x"]),
                         "y": int(zone_dict["y"]),
-                        "metadata": meta_dict
+                        "metadata": meta_dict,
                     }
                     parsed_data["zones"].append(zone_data)
                     continue
@@ -173,9 +193,12 @@ def parse_map_file(filepath: str) -> ParsedLevelData:
                 match_connection = PATTERN_CONNECTION.match(line)
                 if match_connection:
                     if state == 0:
-                        raise ParseError("Invalid order: Connections must be "
-                                         "defined after nb_drones and "
-                                         "hubs.", line_number)
+                        raise ParseError(
+                            "Invalid order: Connections must be "
+                            "defined after nb_drones and "
+                            "hubs.",
+                            line_number,
+                        )
 
                     # Lock the state so no more hubs can be defined
                     state = 2
@@ -183,19 +206,20 @@ def parse_map_file(filepath: str) -> ParsedLevelData:
                     conn_dict = match_connection.groupdict()
                     meta_dict = extract_metadata(
                         conn_dict.pop("meta"), line_number, CONN_META_KEYS
-                        )
+                    )
 
                     conn_data = {
                         "from_hub": conn_dict["from_hub"],
                         "to_hub": conn_dict["to_hub"],
-                        "metadata": meta_dict
+                        "metadata": meta_dict,
                     }
                     parsed_data["connections"].append(conn_data)
                     continue
 
                 # If the line matched none of the strict regexes above
-                raise ParseError("Invalid syntax or unrecognized "
-                                 "format.", line_number)
+                raise ParseError(
+                    "Invalid syntax or unrecognized format.", line_number
+                )
 
     except FileNotFoundError:
         raise Exception(f"File not found: {filepath}")
