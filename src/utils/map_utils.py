@@ -1,6 +1,8 @@
 from typing import Dict, Tuple
-from core.graph import Hub
+
 import arcade
+
+from core.graph import Hub
 
 
 def get_bounding_box(hubs: Dict[str, Hub]) -> Tuple[int, int, int, int]:
@@ -30,8 +32,13 @@ def get_bounding_box(hubs: Dict[str, Hub]) -> Tuple[int, int, int, int]:
 
 
 def calculate_scale_factors(
-    min_x: int, max_x: int, min_y: int, max_y: int,
-    screen_width: int, screen_height: int, padding: int
+    min_x: int,
+    max_x: int,
+    min_y: int,
+    max_y: int,
+    screen_width: int,
+    screen_height: int,
+    padding: int,
 ) -> Tuple[float, float]:
     """
     Calculates independent scale factors for X and Y axes
@@ -51,10 +58,16 @@ def calculate_scale_factors(
 
 
 def get_screen_coordinates(
-    logical_x: int, logical_y: int,
-    min_x: int, min_y: int, max_x: int, max_y: int,
-    scale_x: float, scale_y: float,
-    screen_width: int, screen_height: int
+    logical_x: int,
+    logical_y: int,
+    min_x: int,
+    min_y: int,
+    max_x: int,
+    max_y: int,
+    scale_x: float,
+    scale_y: float,
+    screen_width: int,
+    screen_height: int,
 ) -> Tuple[float, float]:
     """
     Transforms logical graph coordinates into physical screen pixels
@@ -74,22 +87,22 @@ def get_screen_coordinates(
 
 
 arcade_color_data = {
-            "white": arcade.color.WHITE,
-            "green": arcade.color.GREEN,
-            "blue": arcade.color.BLUE,
-            "gold": arcade.color.GOLD,
-            "black": arcade.color.BLACK,
-            "orange": arcade.color.ORANGE,
-            "red": arcade.color.RED,
-            "purple": arcade.color.PURPLE,
-            "maroon": arcade.color.MAROON,
-            "brown": arcade.color.BROWN,
-            "darkred": arcade.color.DARK_RED,
-            "violet": arcade.color.VIOLET,
-            "crimson": arcade.color.CRIMSON,
-            "rainbow": arcade.color.MULBERRY,
-            "cyan": arcade.color.CYAN,
-            "yellow": arcade.color.YELLOW,
-            "lime": arcade.color.LIME,
-            "magenta": arcade.color.MAGENTA,
-        }
+    "white": arcade.color.WHITE,
+    "green": arcade.color.GREEN,
+    "blue": arcade.color.BLUE,
+    "gold": arcade.color.GOLD,
+    "black": arcade.color.BLACK,
+    "orange": arcade.color.ORANGE,
+    "red": arcade.color.RED,
+    "purple": arcade.color.PURPLE,
+    "maroon": arcade.color.MAROON,
+    "brown": arcade.color.BROWN,
+    "darkred": arcade.color.DARK_RED,
+    "violet": arcade.color.VIOLET,
+    "crimson": arcade.color.CRIMSON,
+    "rainbow": arcade.color.MULBERRY,
+    "cyan": arcade.color.CYAN,
+    "yellow": arcade.color.YELLOW,
+    "lime": arcade.color.LIME,
+    "magenta": arcade.color.MAGENTA,
+}

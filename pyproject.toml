@@ -31,3 +31,18 @@ testpaths = ["tests"]
 pythonpath = [
   "src"
 ]
+
+[tool.ruff]
+# Set the maximum line length to 80 characters.
+line-length = 80
+
+[tool.ruff.lint]
+# Enable specific rule sets. 
+# "E" and "W" are for pycodestyle (equivalent to Flake8 base rules)
+# "F" is for Pyflakes
+select = ["E", "F", "W"]
+
+[tool.ruff.format]
+# Standardize formatting
+quote-style = "double"
+indent-style = "space"

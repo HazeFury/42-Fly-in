@@ -2,10 +2,11 @@ import sys
 from typing import Dict, Optional
 
 from pydantic import ValidationError
+
 from utils.errors import ParseError
+from utils.get_path import get_complete_path
 from utils.models import LevelData
 from utils.parser import parse_map_file
-from utils.get_path import get_complete_path
 
 
 class MapManager:
@@ -13,13 +14,14 @@ class MapManager:
     Manages loading, caching, and accessing all map files within the project.
     Acts as a central registry to prevent redundant disk I/O operations.
     """
+
     def __init__(self) -> None:
         # Maps categorized by difficulty: {difficulty: {level_name: LevelData}}
         self._maps: Dict[str, Dict[str, LevelData]] = {
             "easy": {},
             "medium": {},
             "hard": {},
-            "challenger": {}
+            "challenger": {},
         }
         self.load_all_maps()
 
@@ -42,8 +44,10 @@ class MapManager:
                     self._maps[difficulty][level_data.level_name] = level_data
 
                 except ValidationError as e:
-                    print("\033[91m[ERROR]\033[0m Failed to load the file : "
-                          f"'\033[93m{file_path.name}\033[0m'\n")
+                    print(
+                        "\033[91m[ERROR]\033[0m Failed to load the file : "
+                        f"'\033[93m{file_path.name}\033[0m'\n"
+                    )
 
                     for error in e.errors():
                         raw_msg = error.get("msg", "Unknown validation error")
@@ -60,13 +64,17 @@ class MapManager:
                     sys.exit(1)
 
                 except ParseError as e:
-                    print("\033[91m[ERROR]\033[0m Failed to load the file : "
-                          f"'\033[93m{file_path.name}\033[0m'\n{e}")
+                    print(
+                        "\033[91m[ERROR]\033[0m Failed to load the file : "
+                        f"'\033[93m{file_path.name}\033[0m'\n{e}"
+                    )
                     sys.exit(1)
 
                 except Exception as e:
-                    print("\033[91m[ERROR]\033[0m Unexpected error\n"
-                          f"\033[91m[REASON]\033[0m {e}\n")
+                    print(
+                        "\033[91m[ERROR]\033[0m Unexpected error\n"
+                        f"\033[91m[REASON]\033[0m {e}\n"
+                    )
                     print("\n\033[94m==== EXITING PROGRAM ====\033[0m")
                     sys.exit(1)
 

@@ -1,17 +1,19 @@
+from typing import Any
+
 import arcade
+
 from core.graph import Hub
 from utils.get_path import get_complete_path
-from typing import Any
 
 # Preload textures at the module level so they are loaded into RAM only once!
 TEX_BLOCKED = arcade.load_texture(get_complete_path("assets/icons/skull.png"))
 TEX_END = arcade.load_texture(get_complete_path("assets/icons/end_flag.png"))
-TEX_PRIORITY = arcade.load_texture(get_complete_path(
-    "assets/icons/battery.png")
-    )
-TEX_RESTRICTED = arcade.load_texture(get_complete_path(
-    "assets/icons/warning.png")
-    )
+TEX_PRIORITY = arcade.load_texture(
+    get_complete_path("assets/icons/battery.png")
+)
+TEX_RESTRICTED = arcade.load_texture(
+    get_complete_path("assets/icons/warning.png")
+)
 
 
 class VisualHub:
@@ -25,7 +27,7 @@ class VisualHub:
         screen_x: float,
         screen_y: float,
         radius: float,
-        color: Any
+        color: Any,
     ) -> None:
         """
         Initialize the visual hub and setup its icon if necessary.
@@ -77,6 +79,6 @@ class VisualHub:
                     self.screen_x,
                     self.screen_y,
                     self.icon_width,
-                    self.icon_height
-                )
+                    self.icon_height,
+                ),
             )

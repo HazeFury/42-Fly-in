@@ -1,9 +1,10 @@
 import arcade
 from arcade.gui import (
-    UIManager,
     UIAnchorLayout,
     UIBoxLayout,
+    UIManager,
 )
+
 from components.button import Button
 from components.text import Text
 from utils.get_path import get_complete_path
@@ -19,12 +20,7 @@ class DifficultyView(arcade.View):
         background_path = get_complete_path("assets/background.png")
         self.background_texture = arcade.load_texture(background_path)
 
-        difficulties = [
-            "easy",
-            "medium",
-            "hard",
-            "challenger"
-        ]
+        difficulties = ["easy", "medium", "hard", "challenger"]
 
         self.ui = UIManager()
         anchor = self.ui.add(UIAnchorLayout())
@@ -35,18 +31,19 @@ class DifficultyView(arcade.View):
 
         final_text = (
             text.with_padding(all=15)
-                .with_background(color=arcade.color.LIGHT_BROWN)
-                .with_border(color=arcade.color.BLACK, width=2)
-            )
+            .with_background(color=arcade.color.LIGHT_BROWN)
+            .with_border(color=arcade.color.BLACK, width=2)
+        )
 
         for diff in difficulties:
-            button_box.add(Button(
-                text=diff,
-                action=lambda choosen_diff=diff: self.window.show_view(
-                    LevelView(choosen_diff)
+            button_box.add(
+                Button(
+                    text=diff,
+                    action=lambda choosen_diff=diff: self.window.show_view(
+                        LevelView(choosen_diff)
                     ),
-                width=200,
-                height=100
+                    width=200,
+                    height=100,
                 )
             )
         global_box.add(final_text)
@@ -54,10 +51,11 @@ class DifficultyView(arcade.View):
 
         from views.menu_view import MenuView
 
-        global_box.add(Button(
-            text="Go back to menu",
-            scale=1.5,
-            action=lambda: self.window.show_view(MenuView())
+        global_box.add(
+            Button(
+                text="Go back to menu",
+                scale=1.5,
+                action=lambda: self.window.show_view(MenuView()),
             )
         )
 
@@ -78,8 +76,8 @@ class DifficultyView(arcade.View):
                 self.window.width / 2,
                 self.window.height / 2,
                 self.window.width,
-                self.window.height
-            )
+                self.window.height,
+            ),
         )
 
         self.ui.draw()

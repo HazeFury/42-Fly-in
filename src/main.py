@@ -1,7 +1,9 @@
-import arcade
 import sys
-from views.menu_view import MenuView
+
+import arcade
+
 from utils.errors import CustomError
+from views.menu_view import MenuView
 
 
 def main() -> None:
@@ -18,8 +20,11 @@ def main() -> None:
         print("\n--- PROGRAM CLOSING ---")
 
     except KeyboardInterrupt:
-        print("\n\033[93m[INFO] User interrupt "
-              "(Ctrl+C). Program closing...\033[0m", file=sys.stderr)
+        print(
+            "\n\033[93m[INFO] User interrupt "
+            "(Ctrl+C). Program closing...\033[0m",
+            file=sys.stderr,
+        )
 
         if arcade.get_window():
             arcade.close_window()

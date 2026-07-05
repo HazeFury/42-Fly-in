@@ -24,7 +24,7 @@ class ColoredFormatter(logging.Formatter):
         logging.WARNING: f"{YELLOW}[WARNING] %(asctime)s - %(message)s{RESET}",
         logging.ERROR: f"{RED}{BOLD}[ERROR] %(asctime)s - %(message)s{RESET}",
         logging.CRITICAL: f"{RED}{BOLD}[FATAL] %(asctime)s - "
-        f"%(message)s{RESET}"
+        f"%(message)s{RESET}",
     }
 
     def format(self, record: logging.LogRecord) -> str:
