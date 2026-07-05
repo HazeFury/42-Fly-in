@@ -7,43 +7,57 @@ from utils.logger import logger
 class LogicalDrone:
     """
     Represents the logical state of a drone in the network.
-    It knows its ID, its planned route, and its current progress.
     """
 
     def __init__(
         self, drone_id: str, start_hub: str, optimal_path: List[str]
     ) -> None:
         self.id = drone_id
-        self.current_hub = start_hub
+        # current_hub becomes None when the drone is flying between hubs
+        self.current_hub: str | None = start_hub
         self.path = optimal_path
         self.path_index = 0
         self.is_delivered = False
 
+        # --- Transit State Properties ---
+        self.transit_destination: str | None = None
+        self.transit_conn_name: str | None = None
+
     def get_next_hub(self) -> str | None:
-        """Returns the next destination on the path, or None if finished."""
         if self.path_index + 1 < len(self.path):
             return self.path[self.path_index + 1]
         return None
 
-    def move_forward(self) -> str | None:
-        """
-        Advances the drone to the next hub and updates its state.
-        Returns the destination name if it moved, or None.
-        """
-        if self.is_delivered:
-            return None
+    def start_transit(self, next_hub: str, connection_name: str) -> None:
+        """Initiates a 2-turn flight toward a restricted zone."""
+        self.transit_destination = next_hub
+        self.transit_conn_name = connection_name
+        self.current_hub = None  # The drone leaves the ground
 
+    def finish_transit(self) -> str:
+        """Completes the flight and lands on the restricted zone."""
+        arrived_at = self.transit_destination
+
+        self.current_hub = arrived_at
+        self.path_index += 1
+        if self.path_index == len(self.path) - 1:
+            self.is_delivered = True
+
+        # Clear transit state
+        self.transit_destination = None
+        self.transit_conn_name = None
+
+        return arrived_at
+
+    def move_forward(self) -> str | None:
+        """Instant travel (1-turn) for normal/priority zones."""
         next_hub = self.get_next_hub()
         if next_hub:
-            self.path_index += 1
             self.current_hub = next_hub
-
-            # Check if we reached the final destination
+            self.path_index += 1
             if self.path_index == len(self.path) - 1:
                 self.is_delivered = True
-
             return next_hub
-
         return None
 
 
@@ -62,14 +76,7 @@ class SimulationEngine:
         self._initialize_drones(nb_drones)
 
     def _initialize_drones(self, nb_drones: int) -> None:
-        """
-        Creates all drones, calculates their optimal paths, and sets them
-        at the start.
-        """
         start_hub, end_hub = self.graph.get_start_and_exit_hub()
-
-        # Calculate the golden path once (since all drones share the same goal
-        # for now)
         optimal_path = calculate_dijkstra_path(self.graph, start_hub, end_hub)
 
         if not optimal_path:
@@ -81,33 +88,30 @@ class SimulationEngine:
         logger.debug(f"Calculated optimal path: {' -> '.join(optimal_path)}")
 
         for i in range(nb_drones):
-            # Drone IDs as requested by the subject: D1, D2, D3...
-            drone_id = f"D{i + 1}"
-            new_drone = LogicalDrone(drone_id, start_hub, optimal_path)
-            self.drones.append(new_drone)
+            self.drones.append(
+                LogicalDrone(f"D{i + 1}", start_hub, optimal_path)
+            )
 
     def next_tick(self) -> None:
-        """
-        Resolves one turn of the simulation.
-        Checks for hub capacities and connection limits before moving.
-        """
         if self.is_finished:
             return
 
         self.current_tick += 1
         movements_this_turn: List[str] = []
 
-        # 1. Take a snapshot of the current hub occupancy
+        # 1. Snapshot occupancy (Include drones in transit to secure their
+        # landing spot!)
         hub_occupancy = {hub_name: 0 for hub_name in self.graph.hubs.keys()}
         for drone in self.drones:
             if not drone.is_delivered:
-                hub_occupancy[drone.current_hub] += 1
+                if drone.transit_destination:
+                    hub_occupancy[drone.transit_destination] += 1
+                elif drone.current_hub:
+                    hub_occupancy[drone.current_hub] += 1
 
-        # Track how much bandwidth each connection has used THIS specific turn
         link_usage: dict[tuple[str, str], int] = {}
 
         def get_link_capacity(hub_a: str, hub_b: str) -> int:
-            """Helper to find the connection capacity between two hubs."""
             for conn in self.graph.connections:
                 if (
                     conn.from_hub.name == hub_a and conn.to_hub.name == hub_b
@@ -115,59 +119,60 @@ class SimulationEngine:
                     conn.from_hub.name == hub_b and conn.to_hub.name == hub_a
                 ):
                     return conn.capacity
-            return 1  # Fallback
+            return 1
 
-        # 2. Process each drone sequentially (D1 acts before D2, etc.)
+        # 2. Process Drones Sequentially
         for drone in self.drones:
             if drone.is_delivered:
                 continue
 
+            # --- RULE A: Is the drone already flying? ---
+            if drone.transit_destination:
+                arrived_hub = drone.finish_transit()
+                movements_this_turn.append(f"{drone.id}-{arrived_hub}")
+                continue
+
+            # --- RULE B: The drone is on a hub and wants to move ---
             next_hub = drone.get_next_hub()
             if not next_hub:
                 continue
 
             current_hub = drone.current_hub
-
-            # --- Rule A: Hub Capacity ---
             dest_hub_obj = self.graph.hubs[next_hub]
-            if hub_occupancy[next_hub] >= dest_hub_obj.max_drones:
-                logger.debug(
-                    f"{drone.id} is waiting: Hub '{next_hub}' is full."
-                )
-                continue  # Drone stays on its current hub
 
-            # --- Rule B: Connection Bandwidth ---
-            # Sort the names alphabetically so (A,B) and (B,A) use the same
-            # tracking key
+            # Check Hub Capacity
+            if hub_occupancy[next_hub] >= dest_hub_obj.max_drones:
+                continue
+
+            # Check Connection Bandwidth
             conn_key = tuple(sorted([current_hub, next_hub]))
             current_usage = link_usage.get(conn_key, 0)
             max_capacity = get_link_capacity(current_hub, next_hub)
 
             if current_usage >= max_capacity:
-                logger.debug(
-                    f"{drone.id} is waiting: Connection to '{next_hub}' is "
-                    "saturated."
-                )
                 continue
 
-            # --- Move Approved ! ---
-            # Update the physical state so subsequent drones see the new
-            # occupancy
+            # Move Approved: Update physical limits for subsequent drones
             hub_occupancy[current_hub] -= 1
             hub_occupancy[next_hub] += 1
             link_usage[conn_key] = current_usage + 1
 
-            # Update the logical state
-            destination = drone.move_forward()
-            if destination:
+            # Is it a restricted zone requiring a flight?
+            if dest_hub_obj.access == "restricted":
+                # Fallback connection name. Modify this if your parser
+                # extracts real connection names.
+                conn_name = f"conn_{current_hub}-{next_hub}"
+                drone.start_transit(next_hub, conn_name)
+                movements_this_turn.append(f"{drone.id}-{conn_name}")
+            else:
+                # Instant jump (normal/priority zones)
+                destination = drone.move_forward()
                 movements_this_turn.append(f"{drone.id}-{destination}")
 
-        # 3. Logging Phase
+        # 3. Logging & Win Condition
         if movements_this_turn:
-            log_line = " ".join(movements_this_turn)
-            logger.info(log_line)
+            logger.info(" ".join(movements_this_turn))
 
-        # 4. Check Win Condition
         if all(drone.is_delivered for drone in self.drones):
             self.is_finished = True
             logger.debug(f"Simulation completed in {self.current_tick} ticks.")
