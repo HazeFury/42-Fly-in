@@ -36,6 +36,7 @@ class LogicalDrone:
 
     def finish_transit(self) -> str:
         """Completes the flight and lands on the restricted zone."""
+        assert self.transit_destination is not None
         arrived_at = self.transit_destination
 
         self.current_hub = arrived_at
@@ -137,7 +138,7 @@ class SimulationEngine:
                 ) or (
                     conn.from_hub.name == hub_b and conn.to_hub.name == hub_a
                 ):
-                    return conn.capacity
+                    return int(conn.capacity)
             return 1
 
         # 2. Process Drones Sequentially
@@ -157,6 +158,10 @@ class SimulationEngine:
                 continue
 
             current_hub = drone.current_hub
+
+            if current_hub is None:
+                continue
+
             dest_hub_obj = self.graph.hubs[next_hub]
 
             # Check Hub Capacity
@@ -164,7 +169,10 @@ class SimulationEngine:
                 continue
 
             # Check Connection Bandwidth
-            conn_key = tuple(sorted([current_hub, next_hub]))
+            conn_key: tuple[str, str] = (
+                min(current_hub, next_hub),
+                max(current_hub, next_hub),
+            )
             current_usage = link_usage.get(conn_key, 0)
             max_capacity = get_link_capacity(current_hub, next_hub)
 
