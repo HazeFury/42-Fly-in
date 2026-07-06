@@ -86,6 +86,18 @@ class MapView(arcade.View):
                 y=self.window.height - 50,
             )
         )
+
+        self.turn_text = arcade.Text(
+            text=f"Turn: {self.engine.current_tick}",
+            x=self.window.width - 20,
+            y=20,
+            color=arcade.color.WHITE,
+            font_size=28,
+            font_name="Kenney Future",
+            anchor_x="right",
+            anchor_y="baseline",
+        )
+
         self.setup()
 
     def setup(self) -> None:
@@ -232,6 +244,20 @@ class MapView(arcade.View):
         # 6. Draw UI elements (buttons)
         self.ui.draw()
 
+        # background for tick counter
+        arcade.draw_rect_filled(
+            rect=arcade.rect.XYWH(
+                self.window.width - 115,  # center_x (width - la moitié de 220)
+                30,  # center_y (la moitié de 80)
+                230,  # width
+                60,  # height
+            ),
+            color=(0, 0, 0, 175),
+        )
+
+        # Draw the HUD last so it is always on top
+        self.turn_text.draw()
+
     def on_key_press(self, symbol: int, modifiers: int) -> None:
         """
         Advances the simulation by one tick every time SPACE is pressed.
@@ -248,6 +274,8 @@ class MapView(arcade.View):
             }
             # 2. Let the engine do the heavy logical work and generate the logs
             self.engine.next_tick()
+
+            self.turn_text.text = f"Turn: {self.engine.current_tick}"
 
             # 3. Compare new positions and animate the ones that moved
             for logical_drone in self.engine.drones:
