@@ -10,6 +10,7 @@ from components.text import Text
 from core.map_manager import maps_registry
 from utils.get_path import get_complete_path
 from utils.map_utils import verify_map
+from utils.models import LevelData
 from views.error_view import ErrorView
 from views.map_view import MapView
 
@@ -41,15 +42,25 @@ class LevelView(arcade.View):
             )
 
             for level in levels:
-                level_data = maps_registry.get_map(difficulty, level)
+                # 1. We accept the Optional nature of the return here
+                level_data_opt = maps_registry.get_map(difficulty, level)
 
-                if level_data is not None:
+                if level_data_opt is not None:
+                    # 2. We create a strict alias NOW that we are safe.
+                    # Mypy statically guarantees that valid_level_data is
+                    # exactly LevelData.
+                    valid_level_data: LevelData = level_data_opt
 
-                    def launch_map(current_data=level_data) -> None:
+                    # 3. We use the strict alias as the default parameter
+                    def launch_map(
+                        current_data: LevelData = valid_level_data,
+                    ) -> None:
+                        # No more assert needed! Mypy trusts current_data
+                        # completely.
                         is_valid = verify_map(current_data)
 
                         if is_valid:
-                            self.window.show_view(MapView(current_data))
+                            self.window.show_view(MapView(current_data, self))
                         else:
                             self.window.show_view(ErrorView(self))
 
@@ -61,7 +72,6 @@ class LevelView(arcade.View):
                             height=100,
                         )
                     )
-
             global_box.add(final_text)
             global_box.add(button_box)
 
