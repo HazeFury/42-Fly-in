@@ -4,6 +4,7 @@ import arcade
 from arcade.gui import UIAnchorLayout, UIManager
 
 from components.button import Button
+from components.dialog import create_end_level_dialog
 from components.visual_drone import VisualDrone
 from components.visual_hub import VisualHub
 from core.graph import Network
@@ -23,10 +24,13 @@ arcade.load_font(":resources:/fonts/ttf/Kenney/Kenney_Pixel.ttf")
 class MapView(arcade.View):
     """View for displaying the drone network map."""
 
-    def __init__(self, level_data: LevelData) -> None:
+    def __init__(
+        self, level_data: LevelData, previous_view: arcade.View
+    ) -> None:
         super().__init__()
 
         # Instantiate the graph logic
+        self.level_data = level_data
         self.graph_network = Network(level_data)
         self.engine = SimulationEngine(
             self.graph_network, level_data.nb_drones
@@ -34,6 +38,8 @@ class MapView(arcade.View):
         self.hub_labels: list[arcade.Text] = []
         self.visual_hubs: list[VisualHub] = []
         self.hub_color_data: dict[str, Any] = arcade_color_data
+        self.dialog_shown = False
+        self.previous_view = previous_view
 
         # --- Map Scaling Initialization ---
         self.padding: int = 200
@@ -55,7 +61,7 @@ class MapView(arcade.View):
         )
 
         # 1. Create a SpriteList to manage all drones efficiently
-        self.drone_list: arcade.SpriteList = arcade.SpriteList()
+        self.drone_list: arcade.SpriteList[VisualDrone] = arcade.SpriteList()
         # Dictionary linking logical drone ID ("D1") to its visual sprite
         self.visual_drones: dict[str, VisualDrone] = {}
 
@@ -97,11 +103,14 @@ class MapView(arcade.View):
         self.background_texture = arcade.load_texture(background_path)
 
         self.ui = UIManager()
+
+        from views.difficulty_view import DifficultyView
+
         self.ui.add(
             Button(
                 text="exit",
                 scale=0.8,
-                action=lambda: self.window.show_view(MapView(level_data)),
+                action=lambda: self.window.show_view(DifficultyView()),
                 x=10,
                 y=self.window.height - 50,
             )
@@ -116,6 +125,18 @@ class MapView(arcade.View):
             font_name="Kenney Future",
             anchor_x="right",
             anchor_y="baseline",
+        )
+
+        # Remplacer 'anchor =' par 'self.ui_anchor ='
+        self.ui_anchor = self.manager.add(arcade.gui.UIAnchorLayout())
+
+        # Et on utilise self.ui_anchor pour le bouton
+        self.ui_anchor.add(
+            child=self.mode_button,
+            anchor_x="right",
+            anchor_y="top",
+            align_x=-20,
+            align_y=-20,
         )
 
         self.setup()
@@ -203,12 +224,39 @@ class MapView(arcade.View):
         self.drone_list.update()
         self.drone_list.update_animation(delta_time)
 
+        # Check for victory condition
+        if self.engine.is_finished and not self.dialog_shown:
+            self.dialog_shown = True
+            self.is_auto = (
+                False  # Ensure auto-mode stops pressing the gas pedal
+            )
+            self._show_victory_dialog()
+
         if self.is_auto and not self.engine.is_finished:
             self.time_since_last_tick += delta_time
 
             if self.time_since_last_tick >= self.tick_rate:
                 self.execute_tick()
                 self.time_since_last_tick = 0.0
+
+    def _show_victory_dialog(self) -> None:
+        def trigger_replay() -> None:
+            self.window.show_view(MapView(self.level_data, self.previous_view))
+
+        def trigger_exit() -> None:
+
+            self.window.show_view(self.previous_view)
+
+        dialog = create_end_level_dialog(
+            turns=self.engine.current_tick,
+            on_replay=trigger_replay,
+            on_exit=trigger_exit,
+        )
+
+        # Le secret est ici : on l'ajoute à self.ui_anchor, pas à self.manager
+        self.ui_anchor.add(
+            child=dialog, anchor_x="center_x", anchor_y="center_y"
+        )
 
     def on_show_view(self) -> None:
         """Called when the view is shown."""
@@ -321,7 +369,10 @@ class MapView(arcade.View):
                 logical_drone.current_hub or logical_drone.transit_destination
             )
 
-            if new_logical_pos != old_positions[logical_drone.id]:
+            if (
+                new_logical_pos is not None
+                and new_logical_pos != old_positions[logical_drone.id]
+            ):
                 dest_hub = self.graph_network.hubs[new_logical_pos]
                 target_x, target_y = get_screen_coordinates(
                     dest_hub.x,
