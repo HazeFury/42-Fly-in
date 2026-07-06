@@ -1,7 +1,7 @@
 from typing import Any
 
 import arcade
-from arcade.gui import UIManager
+from arcade.gui import UIAnchorLayout, UIManager
 
 from components.button import Button
 from components.visual_drone import VisualDrone
@@ -9,7 +9,6 @@ from components.visual_hub import VisualHub
 from core.graph import Network
 from core.simulation import SimulationEngine
 from utils.get_path import get_complete_path
-from utils.logger import logger
 from utils.map_utils import (
     arcade_color_data,
     calculate_scale_factors,
@@ -70,18 +69,39 @@ class MapView(arcade.View):
         # 3. Teleport everyone to the starting line
         self._place_drones_at_start()
 
+        # --- Auto/Manual System ---
+        self.is_auto = False
+        self.time_since_last_tick = 0.0
+        self.tick_rate = 1.0  # Time in seconds between each automatic tick
+
+        # Setup the UI Manager for the MapView
+        self.manager = UIManager()
+        anchor = self.manager.add(UIAnchorLayout())
+
+        self.mode_button = Button(
+            text="Mode: MANUEL", action=self.toggle_mode, width=250, height=50
+        )
+
+        # Arcade 3.0 syntax: anchor properties are passed directly to the
+        # layout's add method
+        anchor.add(
+            child=self.mode_button,
+            anchor_x="right",
+            anchor_y="top",
+            align_x=-20,
+            align_y=-20,
+        )
+
         # --- Assets and UI ---
         background_path = get_complete_path("assets/map.png")
         self.background_texture = arcade.load_texture(background_path)
-
-        from views.difficulty_view import DifficultyView
 
         self.ui = UIManager()
         self.ui.add(
             Button(
                 text="exit",
                 scale=0.8,
-                action=lambda: self.window.show_view(DifficultyView()),
+                action=lambda: self.window.show_view(MapView(level_data)),
                 x=10,
                 y=self.window.height - 50,
             )
@@ -169,20 +189,36 @@ class MapView(arcade.View):
             v_drone.center_x = screen_x
             v_drone.center_y = screen_y
 
+    def toggle_mode(self) -> None:
+        """Switches between Auto and Manual simulation modes."""
+        self.is_auto = not self.is_auto
+
+        if self.is_auto:
+            self.mode_button.text = "Mode: AUTO"
+        else:
+            self.mode_button.text = "Mode: MANUEL"
+
     def on_update(self, delta_time: float) -> None:
-        """
-        Called 60 times per second to update game logic.
-        """
-        # 3. Feed the real time (delta_time) to the drone's internal timer
-        self.drone_list.update(delta_time)
+        """Called by Arcade 60 times per second to update the logic."""
+        self.drone_list.update()
+        self.drone_list.update_animation(delta_time)
+
+        if self.is_auto and not self.engine.is_finished:
+            self.time_since_last_tick += delta_time
+
+            if self.time_since_last_tick >= self.tick_rate:
+                self.execute_tick()
+                self.time_since_last_tick = 0.0
 
     def on_show_view(self) -> None:
         """Called when the view is shown."""
         self.ui.enable()
+        self.manager.enable()
 
     def on_hide_view(self) -> None:
         """Called when the view is hidden."""
         self.ui.disable()
+        self.manager.disable()
 
     def on_draw(self) -> None:
         """Render the screen following the Painter's Algorithm."""
@@ -243,6 +279,7 @@ class MapView(arcade.View):
 
         # 6. Draw UI elements (buttons)
         self.ui.draw()
+        self.manager.draw()
 
         # background for tick counter
         arcade.draw_rect_filled(
@@ -258,52 +295,53 @@ class MapView(arcade.View):
         # Draw the HUD last so it is always on top
         self.turn_text.draw()
 
-    def on_key_press(self, symbol: int, modifiers: int) -> None:
+    def execute_tick(self) -> None:
         """
-        Advances the simulation by one tick every time SPACE is pressed.
+        Executes a single turn of the simulation, updates the HUD,
+        and triggers the visual drone animations.
         """
-        if symbol == arcade.key.SPACE:
-            if self.engine.is_finished:
-                logger.info("The simulation is already finished!")
-                return
+        if self.engine.is_finished:
+            return
 
-            # 1. Snapshot the current positions of all drones BEFORE the tick
-            old_positions = {
-                d.id: (d.current_hub or d.transit_destination)
-                for d in self.engine.drones
-            }
-            # 2. Let the engine do the heavy logical work and generate the logs
-            self.engine.next_tick()
+        # 1. Snapshot logical position BEFORE the tick
+        old_positions = {
+            d.id: (d.current_hub or d.transit_destination)
+            for d in self.engine.drones
+        }
 
-            self.turn_text.text = f"Turn: {self.engine.current_tick}"
+        # 2. Advance the engine
+        self.engine.next_tick()
 
-            # 3. Compare new positions and animate the ones that moved
-            for logical_drone in self.engine.drones:
-                # Get the new intended position
-                new_logical_pos = (
-                    logical_drone.current_hub
-                    or logical_drone.transit_destination
+        # Update the HUD
+        self.turn_text.text = f"Turn: {self.engine.current_tick}"
+
+        # 3. Compare new positions and animate
+        for logical_drone in self.engine.drones:
+            new_logical_pos = (
+                logical_drone.current_hub or logical_drone.transit_destination
+            )
+
+            if new_logical_pos != old_positions[logical_drone.id]:
+                dest_hub = self.graph_network.hubs[new_logical_pos]
+                target_x, target_y = get_screen_coordinates(
+                    dest_hub.x,
+                    dest_hub.y,
+                    self.min_x,
+                    self.min_y,
+                    self.max_x,
+                    self.max_y,
+                    self.scale_x,
+                    self.scale_y,
+                    self.window.width,
+                    self.window.height,
                 )
 
-                if new_logical_pos != old_positions[logical_drone.id]:
-                    dest_hub = self.graph_network.hubs[new_logical_pos]
-                    target_x, target_y = get_screen_coordinates(
-                        dest_hub.x,
-                        dest_hub.y,
-                        self.min_x,
-                        self.min_y,
-                        self.max_x,
-                        self.max_y,
-                        self.scale_x,
-                        self.scale_y,
-                        self.window.width,
-                        self.window.height,
-                    )
+                anim_time = 1.0 if logical_drone.transit_destination else 0.5
+                v_drone = self.visual_drones[logical_drone.id]
+                v_drone.move_to(target_x, target_y, travel_time=anim_time)
 
-                    # If it enters transit, the animation takes twice as long!
-                    anim_time = (
-                        1.0 if logical_drone.transit_destination else 0.5
-                    )
-
-                    v_drone = self.visual_drones[logical_drone.id]
-                    v_drone.move_to(target_x, target_y, travel_time=anim_time)
+    def on_key_press(self, symbol: int, modifiers: int) -> None:
+        """Handles keyboard input."""
+        # Spacebar only works if we are NOT in auto mode
+        if symbol == arcade.key.SPACE and not self.is_auto:
+            self.execute_tick()

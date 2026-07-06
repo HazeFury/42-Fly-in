@@ -1,64 +1,80 @@
+import math
+from typing import List, Optional, Tuple
+
 import arcade
 
 
 class VisualDrone(arcade.Sprite):
     """
-    A dumb visual component that smoothly animates from point A to point B
-    using linear interpolation (Lerp), independent of the frame rate.
+    A smart sprite that handles its own movement queue to prevent
+    corner-cutting during rapid simulation updates.
     """
 
-    def __init__(self, image_path: str, scale: float = 1.0) -> None:
-        super().__init__(image_path, scale)
+    def __init__(self, filename: str, scale: float) -> None:
+        super().__init__(filename, scale)
 
-        # State variables for movement
-        self.is_moving: bool = False
-        self.progress: float = 0.0
-        self.speed: float = 1.0  # 1.0 means it takes exactly 1 second to
-        # reach destination
+        # Queue storing: (target_x, target_y, requested_travel_time)
+        self.waypoints: List[Tuple[float, float, float]] = []
 
-        # Coordinates
-        self.start_x: float = 0.0
-        self.start_y: float = 0.0
-        self.target_x: float = 0.0
-        self.target_y: float = 0.0
+        # Current physical destination
+        self.target_x: Optional[float] = None
+        self.target_y: Optional[float] = None
+
+        # Required speed to reach the current target on time
+        self.current_speed: float = 0.0
 
     def move_to(
-        self, target_x: float, target_y: float, travel_time: float = 1.0
+        self, target_x: float, target_y: float, travel_time: float = 0.5
     ) -> None:
         """
-        Orders the sprite to move to a new location.
+        Instead of teleporting or overriding the current path,
+        we queue the new destination.
         """
-        self.start_x = self.center_x
-        self.start_y = self.center_y
-        self.target_x = target_x
-        self.target_y = target_y
+        self.waypoints.append((target_x, target_y, travel_time))
 
-        # If travel_time is 2 seconds, speed becomes 0.5 (it fills progress
-        # at 50% per sec)
-        self.speed = 1.0 / max(0.001, travel_time)
-        self.progress = 0.0
-        self.is_moving = True
-
-    def update(self, delta_time: float = 1 / 60) -> None:
+    def update_animation(self, delta_time: float = 1 / 60) -> None:
         """
-        Called every frame. Advances the progress timer and calculates
-        the new position.
+        Handles smooth movement along the queued waypoints.
+        Automatically accelerates if falling behind the logical simulation.
         """
-        if not self.is_moving:
-            return
+        # 1. Fetch the next waypoint if the drone is idling
+        if self.target_x is None and self.waypoints:
+            self.target_x, self.target_y, travel_time = self.waypoints.pop(0)
 
-        # Increase progress based on real time
-        self.progress += self.speed * delta_time
+            # Calculate required speed (pixels per second) to arrive strictly
+            # on time
+            dx = self.target_x - self.center_x
+            dy = self.target_y - self.center_y
+            distance = math.sqrt(dx**2 + dy**2)
 
-        # Clamp progress to 1.0 so we don't overshoot the target
-        if self.progress >= 1.0:
-            self.progress = 1.0
-            self.is_moving = False
+            # Prevent division by zero if travel_time is magically 0
+            safe_time = max(0.01, travel_time)
+            self.current_speed = distance / safe_time
 
-        # Apply the Lerp formula for X and Y axes
-        self.center_x = (
-            self.start_x + (self.target_x - self.start_x) * self.progress
-        )
-        self.center_y = (
-            self.start_y + (self.target_y - self.start_y) * self.progress
-        )
+        # 2. Move towards the current target
+        if self.target_x is not None and self.target_y is not None:
+            dx = self.target_x - self.center_x
+            dy = self.target_y - self.center_y
+            distance = math.sqrt(dx**2 + dy**2)
+
+            # Magic trick: The drone accelerates if there is a traffic jam of
+            # waypoints!
+            # Example: 0 waiting = 1x speed. 2 waiting = 3x speed.
+            speed_multiplier = 1.0 + len(self.waypoints)
+            move_amount = self.current_speed * speed_multiplier * delta_time
+
+            # If the step is bigger than the remaining distance, snap exactly
+            # to target
+            if distance <= move_amount:
+                self.center_x = self.target_x
+                self.center_y = self.target_y
+
+                # Clear target to trigger fetching the next waypoint on next
+                # frame
+                self.target_x = None
+                self.target_y = None
+            else:
+                # Standard trigonometry to move along the vector
+                angle = math.atan2(dy, dx)
+                self.center_x += math.cos(angle) * move_amount
+                self.center_y += math.sin(angle) * move_amount
