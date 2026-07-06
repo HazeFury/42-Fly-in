@@ -34,7 +34,7 @@ pythonpath = [
 
 [tool.ruff]
 # Set the maximum line length to 80 characters.
-line-length = 80
+line-length = 79
 
 [tool.ruff.lint]
 # Enable specific rule sets. 

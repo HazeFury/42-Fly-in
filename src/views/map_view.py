@@ -7,8 +7,9 @@ from components.button import Button
 from components.visual_drone import VisualDrone
 from components.visual_hub import VisualHub
 from core.graph import Network
-from core.pathfinding import calculate_dijkstra_path
+from core.simulation import SimulationEngine
 from utils.get_path import get_complete_path
+from utils.logger import logger
 from utils.map_utils import (
     arcade_color_data,
     calculate_scale_factors,
@@ -28,6 +29,9 @@ class MapView(arcade.View):
 
         # Instantiate the graph logic
         self.graph_network = Network(level_data)
+        self.engine = SimulationEngine(
+            self.graph_network, level_data.nb_drones
+        )
         self.hub_labels: list[arcade.Text] = []
         self.visual_hubs: list[VisualHub] = []
         self.hub_color_data: dict[str, Any] = arcade_color_data
@@ -52,16 +56,19 @@ class MapView(arcade.View):
         )
 
         # 1. Create a SpriteList to manage all drones efficiently
-        self.drone_list: arcade.SpriteList[VisualDrone] = arcade.SpriteList()
+        self.drone_list: arcade.SpriteList = arcade.SpriteList()
+        # Dictionary linking logical drone ID ("D1") to its visual sprite
+        self.visual_drones: dict[str, VisualDrone] = {}
 
         drone_path = get_complete_path("assets/drone.png")
-        self.drone = VisualDrone(str(drone_path), scale=0.3)
 
-        # Add our single drone to the list (for now)
-        self.drone_list.append(self.drone)
+        for logical_drone in self.engine.drones:
+            v_drone = VisualDrone(str(drone_path), scale=0.3)
+            self.visual_drones[logical_drone.id] = v_drone
+            self.drone_list.append(v_drone)
 
-        # 2. Place it on the starting hub
-        self._place_drone_at_start()
+        # 3. Teleport everyone to the starting line
+        self._place_drones_at_start()
 
         # --- Assets and UI ---
         background_path = get_complete_path("assets/map.png")
@@ -80,15 +87,6 @@ class MapView(arcade.View):
             )
         )
         self.setup()
-
-        # #############################################################
-        # -----------------  DJIKSTRA TEST  ---------------------------
-        start_hub, end_hub = self.graph_network.get_start_and_exit_hub()
-        self.optimal_path = calculate_dijkstra_path(
-            self.graph_network, start_hub, end_hub
-        )
-        print(self.optimal_path)
-        # ##############################################################3
 
     def setup(self) -> None:
         """Initialize labels using the non-uniform scale."""
@@ -135,17 +133,12 @@ class MapView(arcade.View):
             v_hub = VisualHub(hub, screen_x, screen_y, radius, hub_color)
             self.visual_hubs.append(v_hub)
 
-    def _place_drone_at_start(self) -> None:
+    def _place_drones_at_start(self) -> None:
         """
-        Finds the start_hub in the parsed data and teleports the drone
-        to its exact screen coordinates.
+        Teleports all visual drones to the starting hub's screen coordinates.
         """
-        # Find the starting hub logic object
-        start_hub = next(
-            hub
-            for hub in self.graph_network.hubs.values()
-            if hub.zone_type == "start_hub"
-        )
+        start_hub_name, _ = self.graph_network.get_start_and_exit_hub()
+        start_hub = self.graph_network.hubs[start_hub_name]
 
         screen_x, screen_y = get_screen_coordinates(
             start_hub.x,
@@ -160,8 +153,9 @@ class MapView(arcade.View):
             self.window.height,
         )
 
-        self.drone.center_x = screen_x
-        self.drone.center_y = screen_y
+        for v_drone in self.visual_drones.values():
+            v_drone.center_x = screen_x
+            v_drone.center_y = screen_y
 
     def on_update(self, delta_time: float) -> None:
         """
@@ -240,26 +234,48 @@ class MapView(arcade.View):
 
     def on_key_press(self, symbol: int, modifiers: int) -> None:
         """
-        Temporary debug input to test the Lerp movement.
+        Advances the simulation by one tick every time SPACE is pressed.
         """
         if symbol == arcade.key.SPACE:
-            end_hub = next(
-                hub
-                for hub in self.graph_network.hubs.values()
-                if hub.zone_type == "end_hub"
-            )
+            if self.engine.is_finished:
+                logger.info("The simulation is already finished!")
+                return
 
-            target_x, target_y = get_screen_coordinates(
-                end_hub.x,
-                end_hub.y,
-                self.min_x,
-                self.min_y,
-                self.max_x,
-                self.max_y,
-                self.scale_x,
-                self.scale_y,
-                self.window.width,
-                self.window.height,
-            )
+            # 1. Snapshot the current positions of all drones BEFORE the tick
+            old_positions = {
+                d.id: (d.current_hub or d.transit_destination)
+                for d in self.engine.drones
+            }
+            # 2. Let the engine do the heavy logical work and generate the logs
+            self.engine.next_tick()
 
-            self.drone.move_to(target_x, target_y, travel_time=2.0)
+            # 3. Compare new positions and animate the ones that moved
+            for logical_drone in self.engine.drones:
+                # Get the new intended position
+                new_logical_pos = (
+                    logical_drone.current_hub
+                    or logical_drone.transit_destination
+                )
+
+                if new_logical_pos != old_positions[logical_drone.id]:
+                    dest_hub = self.graph_network.hubs[new_logical_pos]
+                    target_x, target_y = get_screen_coordinates(
+                        dest_hub.x,
+                        dest_hub.y,
+                        self.min_x,
+                        self.min_y,
+                        self.max_x,
+                        self.max_y,
+                        self.scale_x,
+                        self.scale_y,
+                        self.window.width,
+                        self.window.height,
+                    )
+
+                    # If it enters transit, the animation takes twice as long!
+                    anim_time = (
+                        1.0 if logical_drone.transit_destination else 0.5
+                    )
+
+                    v_drone = self.visual_drones[logical_drone.id]
+                    v_drone.move_to(target_x, target_y, travel_time=anim_time)
