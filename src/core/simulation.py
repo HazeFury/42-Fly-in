@@ -76,18 +76,37 @@ class SimulationEngine:
         self._initialize_drones(nb_drones)
 
     def _initialize_drones(self, nb_drones: int) -> None:
+        """
+        Creates all drones, dynamically distributing traffic across perfectly
+        symmetrical routes using a micro-penalty tie-breaker.
+        """
         start_hub, end_hub = self.graph.get_start_and_exit_hub()
-        optimal_path = calculate_dijkstra_path(self.graph, start_hub, end_hub)
 
-        if not optimal_path:
-            logger.critical(
-                "Cannot initialize simulation: No valid path exists!"
-            )
-            return
-
-        logger.debug(f"Calculated optimal path: {' -> '.join(optimal_path)}")
+        traffic_penalties: dict[str, float] = {}
 
         for i in range(nb_drones):
+            optimal_path = calculate_dijkstra_path(
+                self.graph, start_hub, end_hub, traffic_penalties
+            )
+
+            if not optimal_path:
+                logger.critical(
+                    "Cannot initialize simulation for "
+                    f"Drone D{i + 1}: No path found!"
+                )
+                return
+
+            logger.debug(f"Drone D{i + 1} path: {' -> '.join(optimal_path)}")
+
+            # On ajoute un micro-poids. Il cassera l'ordre alphabétique
+            # pour répartir sur les chemins de même distance, sans jamais
+            # provoquer de détours absurdes.
+            for hub in optimal_path:
+                if hub not in (start_hub, end_hub):
+                    traffic_penalties[hub] = (
+                        traffic_penalties.get(hub, 0.0) + 0.00001
+                    )
+
             self.drones.append(
                 LogicalDrone(f"D{i + 1}", start_hub, optimal_path)
             )
