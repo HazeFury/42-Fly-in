@@ -1,8 +1,10 @@
+from collections import deque
 from typing import Dict, Tuple
 
 import arcade
 
 from core.graph import Hub
+from utils.models import LevelData
 
 
 def get_bounding_box(hubs: Dict[str, Hub]) -> Tuple[int, int, int, int]:
@@ -84,6 +86,58 @@ def get_screen_coordinates(
     screen_y = (screen_height / 2) + offset_y
 
     return screen_x, screen_y
+
+
+def verify_map(level_data: LevelData) -> bool:
+    """
+    Performs a Breadth-First Search (BFS) to determine if a valid path
+    exists from the start_hub to the end_hub, avoiding blocked zones.
+    """
+    start_hub = None
+    end_hub = None
+    blocked_zones = set()
+
+    # 1. Identify key zones and obstacles
+    for zone in level_data.zones:
+        if zone.type == "start_hub":
+            start_hub = zone.name
+        elif zone.type == "end_hub":
+            end_hub = zone.name
+
+        # Check if the zone is blocked
+        if zone.metadata and zone.metadata.zone == "blocked":
+            blocked_zones.add(zone.name)
+
+    # If the map is fundamentally broken (missing start or end)
+    if not start_hub or not end_hub:
+        return False
+
+    # 2. Build a lightweight adjacency list
+    adj_list: dict[str, list[str]] = {
+        zone.name: [] for zone in level_data.zones
+    }
+    for conn in level_data.connections:
+        adj_list[conn.from_hub].append(conn.to_hub)
+        adj_list[conn.to_hub].append(conn.from_hub)
+
+    # 3. BFS Execution
+    queue = deque([start_hub])
+    visited = {start_hub}
+
+    while queue:
+        current = queue.popleft()
+
+        # If we reached the goal, the map is solvable
+        if current == end_hub:
+            return True
+
+        for neighbor in adj_list[current]:
+            if neighbor not in visited and neighbor not in blocked_zones:
+                visited.add(neighbor)
+                queue.append(neighbor)
+
+    # If the queue empties and we never hit the end_hub
+    return False
 
 
 arcade_color_data = {

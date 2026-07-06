@@ -9,6 +9,8 @@ from components.button import Button
 from components.text import Text
 from core.map_manager import maps_registry
 from utils.get_path import get_complete_path
+from utils.map_utils import verify_map
+from views.error_view import ErrorView
 from views.map_view import MapView
 
 
@@ -39,16 +41,22 @@ class LevelView(arcade.View):
             )
 
             for level in levels:
-                # 1. Fetch the data outside the lambda
                 level_data = maps_registry.get_map(difficulty, level)
 
                 if level_data is not None:
+
+                    def launch_map(current_data=level_data) -> None:
+                        is_valid = verify_map(current_data)
+
+                        if is_valid:
+                            self.window.show_view(MapView(current_data))
+                        else:
+                            self.window.show_view(ErrorView(self))
+
                     button_box.add(
                         Button(
                             text=level,
-                            action=lambda current_data=level_data: (
-                                self.window.show_view(MapView(current_data))
-                            ),
+                            action=launch_map,
                             width=350,
                             height=100,
                         )
