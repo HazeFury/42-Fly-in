@@ -122,10 +122,10 @@ def parse_map_file(filepath: str) -> ParsedLevelData:
     try:
         with open(file_path_obj, "r", encoding="utf-8") as file:
             for line_number, raw_line in enumerate(file, start=1):
-                line = raw_line.strip()
+                line = raw_line.split("#")[0].strip()
 
                 # Ignore comments and empty lines
-                if not line or line.startswith("#"):
+                if not line:
                     continue
 
                 # Immediately reject multiple brackets anywhere on the line
