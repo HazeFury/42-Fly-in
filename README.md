@@ -86,6 +86,55 @@ This project is fully automated using Make. Here is the complete list of availab
 - `make fclean`: Performs a deep clean. It executes the clean rule and also removes the virtual environment and build files.
 - `make re`: Rebuilds the project from scratch by running fclean followed by all.
 
+<br>
+
+<details> <summary><h2>Project tree</h2></summary>
+
+### Project Structure
+
+Here is an overview of the codebase architecture, separated by concerns (UI, Core Logic, Views):
+
+``` bash
+	src
+	├── components              # => Reusable graphical components and UI elements
+	│   ├── button.py           # -> Interactive clickable buttons
+	│   ├── dialog.py           # -> Modal pop-ups (e.g., end-of-level victory screen)
+	│   ├── map_hud.py          # -> Heads-Up Display managing the UI overlay (turns, buttons)
+	│   ├── map_renderer.py     # -> Optimized static rendering engine for the map topology
+	│   ├── text.py             # -> Custom styled text component
+	│   ├── visual_drone.py     # -> Drone sprite logic with waypoint queuing and dynamic speed
+	│   └── visual_hub.py       # -> Hub rendering logic including specific zone icons
+
+
+	├── core                    # => Core business logic and algorithmic engines
+	│   ├── graph.py            # -> Data structure modeling the network (Hubs and Connections)
+	│   ├── map_manager.py      # -> Registry and loader for parsing available map files
+	│   ├── pathfinding.py      # -> Custom Dijkstra's algorithm with dynamic load balancing
+	│   └── simulation.py       # -> Turn-based engine enforcing movement rules and limits
+
+
+	├── main.py                 # -> Application entry point and Arcade window initialization
+
+
+	├── utils                   # => Shared utilities and helper functions
+	│   ├── errors.py           # -> Custom exception definitions
+	│   ├── get_path.py         # -> Absolute path resolution for safe asset loading
+	│   ├── logger.py           # -> Custom logging configuration for debugging
+	│   ├── map_utils.py        # -> Geometric math, screen scaling, and drone offset logic
+	│   ├── models.py           # -> Data structures and strict typing definitions (LevelData)
+	│   └── parser.py           # -> Custom parser to read, clean, and validate map files
+
+
+	└── views                   # => Main application screens (Arcade View controllers)
+	    ├── difficulty_view.py  # -> Screen for selecting game difficulty
+	    ├── error_view.py       # -> Fallback screen when a map fails BFS validation
+	    ├── level_view.py       # -> Screen for selecting a specific map level
+	    ├── map_view.py         # -> Main controller orchestrating Core, Renderer, and HUD
+	    └── menu_view.py        # -> Main title screen and entry menu
+```
+
+</details>
+
 
 <br>
 

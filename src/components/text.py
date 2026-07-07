@@ -10,7 +10,7 @@ arcade.load_font(":resources:/fonts/ttf/Kenney/Kenney_Future.ttf")
 
 class Text(UILabel):
     """
-    Custom UI Button standardizing the visual styling across the application.
+    Custom UI Text standardizing the visual styling across the application.
     """
 
     def __init__(

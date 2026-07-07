@@ -7,6 +7,12 @@ from views.menu_view import MenuView
 
 
 def main() -> None:
+    """
+    Main entry point of the Fly-in simulation application.
+
+    Initializes the Arcade window, sets up the initial view (MenuView),
+    and gracefully handles system exits and custom parsing errors.
+    """
     print("--- STARTING THE PROGRAM ---")
     print("Please select a card in the Arcade window...")
 

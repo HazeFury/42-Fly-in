@@ -107,19 +107,33 @@ class MapView(arcade.View):
                 )
 
     def _toggle_simulation_mode(self) -> bool:
+        """
+        Toggles the simulation between Manual and Auto progression modes.
+        """
         self.is_auto = not self.is_auto
         return self.is_auto
 
     def _exit_to_previous_view(self) -> None:
+        """
+        Exits the current map simulation and returns to the previous view
+        (level selection).
+        """
         self.window.show_view(self.previous_view)
 
     def _replay_level(self) -> None:
+        """
+        Reloads the current map by instantiating a completely new MapView.
+        """
         self.window.show_view(MapView(self.level_data, self.previous_view))
 
     def on_show_view(self) -> None:
+        """
+        Called by Arcade when the MapView is displayed.
+        """
         self.hud.enable()
 
     def on_hide_view(self) -> None:
+        """Called by Arcade when leaving the MapView."""
         self.hud.disable()
 
     def on_update(self, delta_time: float) -> None:
@@ -139,7 +153,9 @@ class MapView(arcade.View):
                 self.time_since_last_tick = 0.0
 
     def on_draw(self) -> None:
-        """Render the screen strictly following the Painter's Algorithm."""
+        """Renders the view to the screen.
+        Clears the window with a solid black background color.
+        Render the screen strictly following the Painter's Algorithm."""
         self.clear(color=arcade.color.BLACK)
 
         self.renderer.draw()

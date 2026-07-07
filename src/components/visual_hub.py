@@ -29,9 +29,6 @@ class VisualHub:
         radius: float,
         color: Any,
     ) -> None:
-        """
-        Initialize the visual hub and setup its icon if necessary.
-        """
         self.hub_data = hub_data
         self.screen_x = screen_x
         self.screen_y = screen_y

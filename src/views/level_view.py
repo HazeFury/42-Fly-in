@@ -96,12 +96,16 @@ class LevelView(arcade.View):
         anchor.add(global_box)
 
     def on_show_view(self) -> None:
+        """Called by Arcade when this view is displayed on the screen."""
         self.ui.enable()
 
     def on_hide_view(self) -> None:
+        """Called by Arcade when switching away from this view."""
         self.ui.disable()
 
     def on_draw(self) -> None:
+        """Renders the view to the screen.
+        Clears the window with a solid black background color."""
         self.clear(color=arcade.color.BLACK)
 
         arcade.draw_texture_rect(
