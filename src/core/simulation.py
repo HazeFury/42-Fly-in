@@ -24,6 +24,10 @@ class LogicalDrone:
         self.transit_conn_name: str | None = None
 
     def get_next_hub(self) -> str | None:
+        """
+        Retrieves the next hub in the drone's planned path without advancing
+        its actual position.
+        """
         if self.path_index + 1 < len(self.path):
             return self.path[self.path_index + 1]
         return None
@@ -97,8 +101,6 @@ class SimulationEngine:
                 )
                 return
 
-            logger.debug(f"Drone D{i + 1} path: {' -> '.join(optimal_path)}")
-
             # On ajoute un micro-poids. Il cassera l'ordre alphabétique
             # pour répartir sur les chemins de même distance, sans jamais
             # provoquer de détours absurdes.
@@ -113,6 +115,14 @@ class SimulationEngine:
             )
 
     def next_tick(self) -> None:
+        """
+        Advances the simulation engine by a single turn (tick).
+
+        This method enforces physical map limits (hub drone capacity and
+        link bandwidth) and processes the sequential movement of the entire
+        drone fleet. It updates the logical simulation state and logs the
+        successful movements for the current turn.
+        """
         if self.is_finished:
             return
 
@@ -202,4 +212,4 @@ class SimulationEngine:
 
         if all(drone.is_delivered for drone in self.drones):
             self.is_finished = True
-            logger.debug(f"Simulation completed in {self.current_tick} ticks.")
+            logger.info(f"Simulation completed in {self.current_tick} turns.")

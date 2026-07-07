@@ -5,6 +5,17 @@ from core.graph import Network
 
 
 def build_adjacency_list(graph_network: Network) -> Dict[str, List[str]]:
+    """
+    Builds an adjacency list representation of the network graph.
+
+    Args:
+        graph_network (Network): The network object containing hubs
+        and connections.
+
+    Returns:
+        Dict[str, List[str]]: A dictionary mapping each hub name to a list of
+        its connected neighbors.
+    """
     adj_list: Dict[str, List[str]] = {
         hub_name: [] for hub_name in graph_network.hubs.keys()
     }
@@ -20,6 +31,26 @@ def calculate_dijkstra_path(
     end_hub: str,
     traffic_penalties: Optional[Dict[str, float]] = None,
 ) -> Optional[List[str]]:
+    """
+    Calculates the optimal path between two hubs using a modified Dijkstra's
+    algorithm.
+
+    Incorporates custom weights for different zone access types
+    (priority, restricted, normal) and applies dynamic micro-penalties to
+    prevent traffic congestion on symmetrical routes.
+
+    Args:
+        graph_network (Network): The network object representing the map
+        topology.
+        start_hub (str): The name of the starting hub.
+        end_hub (str): The name of the destination hub.
+        traffic_penalties (Optional[Dict[str, float]]): Cumulative penalties
+        for load balancing across routes.
+
+    Returns:
+        Optional[List[str]]: A list of hub names representing the optimal
+        path, or None if no path exists.
+    """
 
     adj_list = build_adjacency_list(graph_network)
     priority_queue: List[tuple[float, str]] = [(0.0, start_hub)]
