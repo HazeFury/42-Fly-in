@@ -140,6 +140,40 @@ def verify_map(level_data: LevelData) -> bool:
     return False
 
 
+def get_drone_offset(
+    drone_id: str, offset_amount: float = 12.0
+) -> tuple[float, float]:
+    """
+    Calculates a deterministic visual offset based on the drone's ID.
+    Uses modulo 4 to place drones in 4 different corners around a hub
+    so they don't visually overlap.
+
+    Args:
+        drone_id: The string identifier of the drone (e.g., "D1", "D2").
+        offset_amount: The distance in pixels to shift the sprite.
+
+    Returns:
+        A tuple containing the (offset_x, offset_y).
+    """
+    # Extract the integer from the ID
+    try:
+        # Assumes IDs are formatted like "D1", "D2", etc.
+        drone_num = int(drone_id.replace("D", ""))
+    except ValueError:
+        drone_num = 0
+
+    position_index = drone_num % 4
+
+    if position_index == 0:
+        return (-offset_amount, offset_amount)  # Top-Left
+    elif position_index == 1:
+        return (offset_amount, offset_amount)  # Top-Right
+    elif position_index == 2:
+        return (-offset_amount, -offset_amount)  # Bottom-Left
+    else:
+        return (offset_amount, -offset_amount)  # Bottom-Right
+
+
 arcade_color_data = {
     "white": arcade.color.WHITE,
     "green": arcade.color.GREEN,
