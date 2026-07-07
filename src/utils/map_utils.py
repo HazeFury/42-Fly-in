@@ -141,7 +141,7 @@ def verify_map(level_data: LevelData) -> bool:
 
 
 def get_drone_offset(
-    drone_id: str, offset_amount: float = 12.0
+    drone_id: str, offset_amount: float = 6.0
 ) -> tuple[float, float]:
     """
     Calculates a deterministic visual offset based on the drone's ID.

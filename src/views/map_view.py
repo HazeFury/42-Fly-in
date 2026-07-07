@@ -2,6 +2,7 @@ from typing import Any
 
 import arcade
 from arcade.gui import UIAnchorLayout, UIManager
+from arcade.shape_list import ShapeElementList
 
 from components.button import Button
 from components.dialog import create_end_level_dialog
@@ -36,8 +37,14 @@ class MapView(arcade.View):
         self.engine = SimulationEngine(
             self.graph_network, level_data.nb_drones
         )
-        self.hub_labels: list[arcade.Text] = []
+        # 1. Vector graphics batch (Lines)
+        self.visual_conn: ShapeElementList[Any] = ShapeElementList()
+
+        # 2. Custom visual components
         self.visual_hubs: list[VisualHub] = []
+
+        # 3. Pre-instantiated texts
+        self.hub_labels: list[arcade.Text] = []
         self.hub_color_data: dict[str, Any] = arcade_color_data
         self.dialog_shown = False
         self.previous_view = previous_view
@@ -66,9 +73,10 @@ class MapView(arcade.View):
         # Dictionary linking logical drone ID ("D1") to its visual sprite
         self.visual_drones: dict[str, VisualDrone] = {}
 
-        drone_path = get_complete_path("assets/drone.png")
-
         for logical_drone in self.engine.drones:
+            if logical_drone.current_hub is None:
+                continue
+
             start_hub = self.graph_network.hubs[logical_drone.current_hub]
             base_x, base_y = get_screen_coordinates(
                 start_hub.x,
@@ -85,6 +93,7 @@ class MapView(arcade.View):
 
             # 2. Get the unique offset for this specific drone
             offset_x, offset_y = get_drone_offset(logical_drone.id)
+            drone_path = get_complete_path("assets/drone.png")
             v_drone = VisualDrone(str(drone_path), scale=0.3)
             v_drone.center_x = base_x + offset_x
             v_drone.center_y = base_y + offset_y
@@ -161,7 +170,52 @@ class MapView(arcade.View):
         self.setup()
 
     def setup(self) -> None:
-        """Initialize labels using the non-uniform scale."""
+        """
+        Pre-computes and sorts static map elements into optimized
+        containers (shapes, sprites, and texts) for fast rendering.
+        """
+        # ---- Logic for Connection lines (Vector Graphics) ----
+        for conn in self.graph_network.connections:
+            start_hub = self.graph_network.hubs[conn.from_hub.name]
+            end_hub = self.graph_network.hubs[conn.to_hub.name]
+
+            x1, y1 = get_screen_coordinates(
+                start_hub.x,
+                start_hub.y,
+                self.min_x,
+                self.min_y,
+                self.max_x,
+                self.max_y,
+                self.scale_x,
+                self.scale_y,
+                self.window.width,
+                self.window.height,
+            )
+            x2, y2 = get_screen_coordinates(
+                end_hub.x,
+                end_hub.y,
+                self.min_x,
+                self.min_y,
+                self.max_x,
+                self.max_y,
+                self.scale_x,
+                self.scale_y,
+                self.window.width,
+                self.window.height,
+            )
+
+            # Valid for ShapeElementList
+            line_shape = arcade.shape_list.create_line(
+                start_x=x1,
+                start_y=y1,
+                end_x=x2,
+                end_y=y2,
+                color=arcade.color.GRAY,
+                line_width=2.0,
+            )
+            self.visual_conn.append(line_shape)
+
+        # ---- Logic for Hubs (Sprites) and Labels (Text) ----
         for hub in self.graph_network.hubs.values():
             screen_x, screen_y = get_screen_coordinates(
                 hub.x,
@@ -176,13 +230,14 @@ class MapView(arcade.View):
                 self.window.height,
             )
 
-            # ---- Logic for text label ----
+            # ---- Text Labels ----
             text_position = 30 if hub.x % 2 == 0 else -30
             if self.is_zoomed and text_position > 0:
                 text_position = 45
             elif self.is_zoomed and text_position < 0:
                 text_position = -45
 
+            # Instantiate once and keep in a standard list
             label = arcade.Text(
                 font_name="Kenney Pixel",
                 text=hub.name,
@@ -194,7 +249,7 @@ class MapView(arcade.View):
             )
             self.hub_labels.append(label)
 
-            # ---- Logic for hub circle ----
+            # ---- Hub Circles ----
             radius = 20 if self.is_zoomed else 12
             hub_color = (
                 self.hub_color_data.get(hub.color, arcade.color.BLACK)
@@ -302,45 +357,15 @@ class MapView(arcade.View):
             ),
         )
 
-        # 2. Draw Connections (behind the hubs)
-        for connection in self.graph_network.connections:
-            # Pass both self.scale_x and self.scale_y
-            x1, y1 = get_screen_coordinates(
-                connection.from_hub.x,
-                connection.from_hub.y,
-                self.min_x,
-                self.min_y,
-                self.max_x,
-                self.max_y,
-                self.scale_x,
-                self.scale_y,
-                self.window.width,
-                self.window.height,
-            )
-            x2, y2 = get_screen_coordinates(
-                connection.to_hub.x,
-                connection.to_hub.y,
-                self.min_x,
-                self.min_y,
-                self.max_x,
-                self.max_y,
-                self.scale_x,
-                self.scale_y,
-                self.window.width,
-                self.window.height,
-            )
+        # 2. Vector Lines (One big batched GPU call)
+        self.visual_conn.draw()
 
-            # Draw the line
-            arcade.draw_line(x1, y1, x2, y2, arcade.color.BLACK, line_width=2)
-
-        # 3. Draw Hubs (on top of connections)
+        # 3. Hubs (Custom draw calls)
         for v_hub in self.visual_hubs:
             v_hub.draw()
 
-            # 4. Draw hub details (name, max_drones)
-            for label in self.hub_labels:
-                label.draw()
-
+        for label in self.hub_labels:
+            label.draw()
         # 5. Draw the drone LAST so it appears ON TOP of the hubs and lines
         self.drone_list.draw()
 
