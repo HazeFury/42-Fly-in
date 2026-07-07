@@ -1,11 +1,8 @@
 from typing import Any
 
 import arcade
-from arcade.gui import UIAnchorLayout, UIManager
 from arcade.shape_list import ShapeElementList
 
-from components.button import Button
-from components.dialog import create_end_level_dialog
 from components.visual_drone import VisualDrone
 from components.visual_hub import VisualHub
 from core.graph import Network
@@ -108,65 +105,20 @@ class MapView(arcade.View):
         self.time_since_last_tick = 0.0
         self.tick_rate = 1.0  # Time in seconds between each automatic tick
 
-        # Setup the UI Manager for the MapView
-        self.manager = UIManager()
-        anchor = self.manager.add(UIAnchorLayout())
-
-        self.mode_button = Button(
-            text="Mode: MANUEL", action=self.toggle_mode, width=250, height=50
-        )
-
-        # Arcade 3.0 syntax: anchor properties are passed directly to the
-        # layout's add method
-        anchor.add(
-            child=self.mode_button,
-            anchor_x="right",
-            anchor_y="top",
-            align_x=-20,
-            align_y=-20,
-        )
-
         # --- Assets and UI ---
-        background_path = get_complete_path("assets/map.png")
-        self.background_texture = arcade.load_texture(background_path)
-
-        self.ui = UIManager()
-
-        from views.difficulty_view import DifficultyView
-
-        self.ui.add(
-            Button(
-                text="exit",
-                scale=0.8,
-                action=lambda: self.window.show_view(DifficultyView()),
-                x=10,
-                y=self.window.height - 50,
-            )
+        self.background_texture = arcade.load_texture(
+            get_complete_path("assets/map.png")
         )
 
-        self.turn_text = arcade.Text(
-            text=f"Turn: {self.engine.current_tick}",
-            x=self.window.width - 20,
-            y=20,
-            color=arcade.color.WHITE,
-            font_size=28,
-            font_name="Kenney Future",
-            anchor_x="right",
-            anchor_y="baseline",
+        # --- HUD Initialization ---
+        from components.map_hud import MapHUD
+
+        self.hud = MapHUD(
+            window=self.window,
+            on_toggle_mode=self._toggle_simulation_mode,
+            on_exit=self._exit_to_previous_view,
+            on_replay=self._replay_level,
         )
-
-        # Remplacer 'anchor =' par 'self.ui_anchor ='
-        self.ui_anchor = self.manager.add(arcade.gui.UIAnchorLayout())
-
-        # Et on utilise self.ui_anchor pour le bouton
-        self.ui_anchor.add(
-            child=self.mode_button,
-            anchor_x="right",
-            anchor_y="top",
-            align_x=-20,
-            align_y=-20,
-        )
-
         self.setup()
 
     def setup(self) -> None:
@@ -284,14 +236,18 @@ class MapView(arcade.View):
             v_drone.center_x = screen_x
             v_drone.center_y = screen_y
 
-    def toggle_mode(self) -> None:
-        """Switches between Auto and Manual simulation modes."""
+    def _toggle_simulation_mode(self) -> bool:
+        """Switches mode and returns the new state to the HUD."""
         self.is_auto = not self.is_auto
+        return self.is_auto
 
-        if self.is_auto:
-            self.mode_button.text = "Mode: AUTO"
-        else:
-            self.mode_button.text = "Mode: MANUEL"
+    def _exit_to_previous_view(self) -> None:
+        """Returns to the level selection menu."""
+        self.window.show_view(self.previous_view)
+
+    def _replay_level(self) -> None:
+        """Reloads the current map completely."""
+        self.window.show_view(MapView(self.level_data, self.previous_view))
 
     def on_update(self, delta_time: float) -> None:
         """Called by Arcade 60 times per second to update the logic."""
@@ -301,10 +257,10 @@ class MapView(arcade.View):
         # Check for victory condition
         if self.engine.is_finished and not self.dialog_shown:
             self.dialog_shown = True
-            self.is_auto = (
-                False  # Ensure auto-mode stops pressing the gas pedal
-            )
-            self._show_victory_dialog()
+            self.is_auto = False
+
+            # Appel au HUD pour afficher la pop-up !
+            self.hud.show_victory_dialog(self.engine.current_tick)
 
         if self.is_auto and not self.engine.is_finished:
             self.time_since_last_tick += delta_time
@@ -313,34 +269,11 @@ class MapView(arcade.View):
                 self.execute_tick()
                 self.time_since_last_tick = 0.0
 
-    def _show_victory_dialog(self) -> None:
-        def trigger_replay() -> None:
-            self.window.show_view(MapView(self.level_data, self.previous_view))
-
-        def trigger_exit() -> None:
-
-            self.window.show_view(self.previous_view)
-
-        dialog = create_end_level_dialog(
-            turns=self.engine.current_tick,
-            on_replay=trigger_replay,
-            on_exit=trigger_exit,
-        )
-
-        # Le secret est ici : on l'ajoute à self.ui_anchor, pas à self.manager
-        self.ui_anchor.add(
-            child=dialog, anchor_x="center_x", anchor_y="center_y"
-        )
-
     def on_show_view(self) -> None:
-        """Called when the view is shown."""
-        self.ui.enable()
-        self.manager.enable()
+        self.hud.enable()
 
     def on_hide_view(self) -> None:
-        """Called when the view is hidden."""
-        self.ui.disable()
-        self.manager.disable()
+        self.hud.disable()
 
     def on_draw(self) -> None:
         """Render the screen following the Painter's Algorithm."""
@@ -357,35 +290,21 @@ class MapView(arcade.View):
             ),
         )
 
-        # 2. Vector Lines (One big batched GPU call)
+        # 2. Draw the Connections
         self.visual_conn.draw()
 
-        # 3. Hubs (Custom draw calls)
+        # 3. Draw Hubs and Labels
         for v_hub in self.visual_hubs:
             v_hub.draw()
 
         for label in self.hub_labels:
             label.draw()
-        # 5. Draw the drone LAST so it appears ON TOP of the hubs and lines
+
+        # 4. Draw the drones
         self.drone_list.draw()
 
-        # 6. Draw UI elements (buttons)
-        self.ui.draw()
-        self.manager.draw()
-
-        # background for tick counter
-        arcade.draw_rect_filled(
-            rect=arcade.rect.XYWH(
-                self.window.width - 115,  # center_x (width - la moitié de 220)
-                30,  # center_y (la moitié de 80)
-                230,  # width
-                60,  # height
-            ),
-            color=(0, 0, 0, 175),
-        )
-
-        # Draw the HUD last so it is always on top
-        self.turn_text.draw()
+        # 5. Draw HUD
+        self.hud.draw(self.engine.current_tick)
 
     def execute_tick(self) -> None:
         """
@@ -403,9 +322,6 @@ class MapView(arcade.View):
 
         # 2. Advance the engine
         self.engine.next_tick()
-
-        # Update the HUD
-        self.turn_text.text = f"Turn: {self.engine.current_tick}"
 
         # 3. Compare new positions and animate
         for logical_drone in self.engine.drones:
