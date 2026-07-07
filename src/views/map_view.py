@@ -14,6 +14,7 @@ from utils.map_utils import (
     arcade_color_data,
     calculate_scale_factors,
     get_bounding_box,
+    get_drone_offset,
     get_screen_coordinates,
 )
 from utils.models import LevelData
@@ -68,7 +69,25 @@ class MapView(arcade.View):
         drone_path = get_complete_path("assets/drone.png")
 
         for logical_drone in self.engine.drones:
+            start_hub = self.graph_network.hubs[logical_drone.current_hub]
+            base_x, base_y = get_screen_coordinates(
+                start_hub.x,
+                start_hub.y,
+                self.min_x,
+                self.min_y,
+                self.max_x,
+                self.max_y,
+                self.scale_x,
+                self.scale_y,
+                self.window.width,
+                self.window.height,
+            )
+
+            # 2. Get the unique offset for this specific drone
+            offset_x, offset_y = get_drone_offset(logical_drone.id)
             v_drone = VisualDrone(str(drone_path), scale=0.3)
+            v_drone.center_x = base_x + offset_x
+            v_drone.center_y = base_y + offset_y
             self.visual_drones[logical_drone.id] = v_drone
             self.drone_list.append(v_drone)
 
@@ -374,7 +393,7 @@ class MapView(arcade.View):
                 and new_logical_pos != old_positions[logical_drone.id]
             ):
                 dest_hub = self.graph_network.hubs[new_logical_pos]
-                target_x, target_y = get_screen_coordinates(
+                base_target_x, base_target_y = get_screen_coordinates(
                     dest_hub.x,
                     dest_hub.y,
                     self.min_x,
@@ -386,10 +405,15 @@ class MapView(arcade.View):
                     self.window.width,
                     self.window.height,
                 )
+                offset_x, offset_y = get_drone_offset(logical_drone.id)
 
                 anim_time = 1.0 if logical_drone.transit_destination else 0.5
                 v_drone = self.visual_drones[logical_drone.id]
-                v_drone.move_to(target_x, target_y, travel_time=anim_time)
+                v_drone.move_to(
+                    target_x=base_target_x + offset_x,
+                    target_y=base_target_y + offset_y,
+                    travel_time=anim_time,
+                )
 
     def on_key_press(self, symbol: int, modifiers: int) -> None:
         """Handles keyboard input."""
