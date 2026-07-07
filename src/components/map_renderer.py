@@ -92,7 +92,7 @@ class MapRenderer:
                 start_y=y1,
                 end_x=x2,
                 end_y=y2,
-                color=arcade.color.GRAY,
+                color=arcade.color.BLACK,
                 line_width=2.0,
             )
             self.static_shapes.append(line_shape)
