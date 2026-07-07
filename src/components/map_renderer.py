@@ -51,7 +51,7 @@ class MapRenderer:
         self.background_texture = arcade.load_texture(
             get_complete_path("assets/map.png")
         )
-        self.static_shapes = ShapeElementList()
+        self.static_shapes: ShapeElementList[Any] = ShapeElementList()
         self.visual_hubs: list[VisualHub] = []
         self.hub_labels: list[arcade.Text] = []
 
