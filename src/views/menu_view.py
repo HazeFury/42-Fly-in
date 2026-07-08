@@ -17,14 +17,10 @@ class MenuView(arcade.View):
     def __init__(self) -> None:
         super().__init__()
 
-        # 1. Dynamically resolve the absolute path to the assets folder
-        # __file__ points to 'src/views/menu_view.py'
-        # Calling .parent 3 times navigates up: views -> src -> root
         background_path = get_complete_path("assets/background.png")
         wood_plank = get_complete_path("assets/wood_plank.png")
         forty_two = get_complete_path("assets/42.png")
 
-        # 2. Load the texture into the RAM ONLY ONCE
         self.background_texture = arcade.load_texture(background_path)
         self.wood_plank = arcade.load_texture(wood_plank)
         self.logo_texture = arcade.load_texture(":resources:/logo.png")
@@ -38,8 +34,6 @@ class MenuView(arcade.View):
             text="Fly-in", font_size=100, text_color=arcade.color.BLACK
         )
 
-        # 2. Chain the wrappers to build the final UI component.
-        # This creates nested layers of layout formatting around the text.
         final_title_widget = base_label.with_padding(
             top=40, bottom=40, left=80, right=80
         ).with_background(texture=self.wood_plank)

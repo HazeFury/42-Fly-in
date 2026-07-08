@@ -5,7 +5,6 @@ import arcade
 from core.graph import Hub
 from utils.get_path import get_complete_path
 
-# Preload textures at the module level so they are loaded into RAM only once!
 TEX_BLOCKED = arcade.load_texture(get_complete_path("assets/icons/skull.png"))
 TEX_END = arcade.load_texture(get_complete_path("assets/icons/end_flag.png"))
 TEX_PRIORITY = arcade.load_texture(

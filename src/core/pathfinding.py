@@ -79,17 +79,13 @@ def calculate_dijkstra_path(
             if neighbor_hub.access == "blocked":
                 continue
 
-            # Determine base weight based on zone access type
             if neighbor_hub.access == "restricted":
                 weight = 2.0
             elif neighbor_hub.access == "priority":
-                # 0.9 makes it mathematically cheaper than a normal zone (1.0)
-                # to win ties, but prevents taking absurdly long detours.
                 weight = 0.8
             else:
                 weight = 1.0
 
-            # Application de la micro-pénalité
             penalty = (
                 traffic_penalties.get(neighbor, 0.0)
                 if traffic_penalties

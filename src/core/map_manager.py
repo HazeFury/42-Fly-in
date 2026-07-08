@@ -16,7 +16,6 @@ class MapManager:
     """
 
     def __init__(self) -> None:
-        # Maps categorized by difficulty: {difficulty: {level_name: LevelData}}
         self._maps: Dict[str, Dict[str, LevelData]] = {
             "easy": {},
             "medium": {},

@@ -13,7 +13,7 @@ class ZoneMetadata(BaseModel):
         default="normal"
     )
     color: str = Field(default="none")
-    max_drones: int = Field(default=1, gt=0)  # Must be greater than 0
+    max_drones: int = Field(default=1, gt=0)
 
 
 class ConnectionMetadata(BaseModel):
@@ -116,11 +116,9 @@ class LevelData(BaseModel):
                     f"'\033[93m{conn.from_hub}\033[0m'"
                 )
 
-            # Determine the alphabetical order of the two hubs
             first_hub = min(conn.from_hub, conn.to_hub)
             second_hub = max(conn.from_hub, conn.to_hub)
 
-            # Create the normalized connection tuple
             normalized_conn: tuple[str, str] = (first_hub, second_hub)
 
             if normalized_conn in seen_connections:
@@ -131,7 +129,6 @@ class LevelData(BaseModel):
                 )
             seen_connections.add(normalized_conn)
 
-        # --- Final Verdict ---
         if errors:
             raise ValueError("\n".join(errors))
 

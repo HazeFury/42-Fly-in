@@ -15,7 +15,6 @@ def get_bounding_box(hubs: Dict[str, Hub]) -> Tuple[int, int, int, int]:
     if not hubs:
         return 0, 0, 0, 0
 
-    # Initialize with the coordinates of the first hub we find
     first_hub = next(iter(hubs.values()))
     min_x = max_x = first_hub.x
     min_y = max_y = first_hub.y
@@ -55,7 +54,6 @@ def calculate_scale_factors(
     scale_x = available_width / width_range
     scale_y = available_height / height_range
 
-    # Return both scales instead of just the minimum
     return scale_x, scale_y
 
 
@@ -78,7 +76,6 @@ def get_screen_coordinates(
     logical_center_x = (min_x + max_x) / 2
     logical_center_y = (min_y + max_y) / 2
 
-    # Apply the specific scale to each axis
     offset_x = (logical_x - logical_center_x) * scale_x
     offset_y = (logical_y - logical_center_y) * scale_y
 
@@ -97,22 +94,18 @@ def verify_map(level_data: LevelData) -> bool:
     end_hub = None
     blocked_zones = set()
 
-    # 1. Identify key zones and obstacles
     for zone in level_data.zones:
         if zone.type == "start_hub":
             start_hub = zone.name
         elif zone.type == "end_hub":
             end_hub = zone.name
 
-        # Check if the zone is blocked
         if zone.metadata and zone.metadata.zone == "blocked":
             blocked_zones.add(zone.name)
 
-    # If the map is fundamentally broken (missing start or end)
     if not start_hub or not end_hub:
         return False
 
-    # 2. Build a lightweight adjacency list
     adj_list: dict[str, list[str]] = {
         zone.name: [] for zone in level_data.zones
     }
@@ -120,14 +113,12 @@ def verify_map(level_data: LevelData) -> bool:
         adj_list[conn.from_hub].append(conn.to_hub)
         adj_list[conn.to_hub].append(conn.from_hub)
 
-    # 3. BFS Execution
     queue = deque([start_hub])
     visited = {start_hub}
 
     while queue:
         current = queue.popleft()
 
-        # If we reached the goal, the map is solvable
         if current == end_hub:
             return True
 
@@ -136,7 +127,6 @@ def verify_map(level_data: LevelData) -> bool:
                 visited.add(neighbor)
                 queue.append(neighbor)
 
-    # If the queue empties and we never hit the end_hub
     return False
 
 

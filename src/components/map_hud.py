@@ -23,12 +23,10 @@ class MapHUD:
         """Initialize the HUD and its components."""
         self.window = window
 
-        # Save the callbacks (functions passed from MapView)
         self.on_toggle_mode = on_toggle_mode
         self.on_exit = on_exit
         self.on_replay = on_replay
 
-        # One single manager to rule them all!
         self.manager = UIManager()
         self.ui_anchor = self.manager.add(UIAnchorLayout())
 
@@ -37,7 +35,6 @@ class MapHUD:
 
     def _setup_buttons(self) -> None:
         """Creates and places the static UI buttons."""
-        # Mode Button (Top-Right)
         self.mode_button = Button(
             text="Mode: MANUEL",
             action=self._handle_mode_toggle,
@@ -52,7 +49,6 @@ class MapHUD:
             align_y=-20,
         )
 
-        # Exit Button (Top-Left, using absolute positioning)
         exit_button = Button(
             text="exit",
             scale=0.8,
@@ -60,7 +56,6 @@ class MapHUD:
             x=10,
             y=self.window.height - 50,
         )
-        # Adding directly to manager since it uses absolute x/y coordinates
         self.manager.add(exit_button)
 
     def _setup_turn_text(self) -> None:
@@ -78,7 +73,6 @@ class MapHUD:
 
     def _handle_mode_toggle(self) -> None:
         """Callback triggered by the mode button. Updates its own text."""
-        # We call the MapView function, which returns the new boolean state
         is_auto = self.on_toggle_mode()
 
         if is_auto:
@@ -107,15 +101,12 @@ class MapHUD:
 
     def draw(self, current_tick: int) -> None:
         """Renders all HUD elements."""
-        # 1. Draw UI Manager (Buttons and Dialogs)
         self.manager.draw()
 
-        # 2. Draw the semi-transparent background for the turn counter
         arcade.draw_rect_filled(
             rect=arcade.rect.XYWH(self.window.width - 115, 30, 230, 60),
             color=(0, 0, 0, 175),
         )
 
-        # 3. Update and draw the turn text
         self.turn_text.text = f"Turn: {current_tick}"
         self.turn_text.draw()
