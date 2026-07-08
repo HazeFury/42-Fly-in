@@ -16,8 +16,6 @@ class ColoredFormatter(logging.Formatter):
     based on the log level to improve terminal readability.
     """
 
-    # Define the visual structure for each log level.
-    # The datefmt will be applied to %(asctime)s automatically.
     FORMATS = {
         logging.DEBUG: f"{CYAN}[DEBUG] %(asctime)s - %(message)s{RESET}",
         logging.INFO: f"{GREEN}[INFO] %(asctime)s - %(message)s{RESET}",
@@ -33,7 +31,6 @@ class ColoredFormatter(logging.Formatter):
         color scheme based on the record's logging level.
         """
         log_fmt = self.FORMATS.get(record.levelno, self.FORMATS[logging.INFO])
-        # Only show Hours:Minutes:Seconds to keep the output clean
         formatter = logging.Formatter(log_fmt, datefmt="%H:%M:%S")
         return formatter.format(record)
 
@@ -52,9 +49,6 @@ def setup_logger(name: str = "fly_in_logger") -> logging.Logger:
     """
     logger = logging.getLogger(name)
 
-    # Set the global threshold.
-    # Use DEBUG during development to see pathfinding logic,
-    # switch to INFO for the final defense to only show drone movements.
     logger.setLevel(logging.DEBUG)
 
     # Prevent adding multiple handlers if the module is imported several times
@@ -71,5 +65,4 @@ def setup_logger(name: str = "fly_in_logger") -> logging.Logger:
     return logger
 
 
-# Create a default instance that can be imported directly
 logger = setup_logger()

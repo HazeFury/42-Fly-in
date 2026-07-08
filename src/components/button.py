@@ -25,7 +25,6 @@ class Button(UITextureButton):
         """
         Initialize the custom button with predefined textures.
         """
-        # Call the parent class constructor without using 'return'
         super().__init__(
             text=text,
             texture=TEX_RED_BUTTON_NORMAL,

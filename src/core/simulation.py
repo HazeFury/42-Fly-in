@@ -36,7 +36,7 @@ class LogicalDrone:
         """Initiates a 2-turn flight toward a restricted zone."""
         self.transit_destination = next_hub
         self.transit_conn_name = connection_name
-        self.current_hub = None  # The drone leaves the ground
+        self.current_hub = None
 
     def finish_transit(self) -> str:
         """Completes the flight and lands on the restricted zone."""
@@ -48,7 +48,6 @@ class LogicalDrone:
         if self.path_index == len(self.path) - 1:
             self.is_delivered = True
 
-        # Clear transit state
         self.transit_destination = None
         self.transit_conn_name = None
 
@@ -101,9 +100,6 @@ class SimulationEngine:
                 )
                 return
 
-            # On ajoute un micro-poids. Il cassera l'ordre alphabétique
-            # pour répartir sur les chemins de même distance, sans jamais
-            # provoquer de détours absurdes.
             for hub in optimal_path:
                 if hub not in (start_hub, end_hub):
                     traffic_penalties[hub] = (
@@ -129,8 +125,6 @@ class SimulationEngine:
         self.current_tick += 1
         movements_this_turn: List[str] = []
 
-        # 1. Snapshot occupancy (Include drones in transit to secure their
-        # landing spot!)
         hub_occupancy = {hub_name: 0 for hub_name in self.graph.hubs.keys()}
         for drone in self.drones:
             if not drone.is_delivered:
@@ -142,6 +136,7 @@ class SimulationEngine:
         link_usage: dict[tuple[str, str], int] = {}
 
         def get_link_capacity(hub_a: str, hub_b: str) -> int:
+            """Get the maximum capacity of a connection."""
             for conn in self.graph.connections:
                 if (
                     conn.from_hub.name == hub_a and conn.to_hub.name == hub_b
@@ -151,18 +146,15 @@ class SimulationEngine:
                     return int(conn.capacity)
             return 1
 
-        # 2. Process Drones Sequentially
         for drone in self.drones:
             if drone.is_delivered:
                 continue
 
-            # --- RULE A: Is the drone already flying? ---
             if drone.transit_destination:
                 arrived_hub = drone.finish_transit()
                 movements_this_turn.append(f"{drone.id}-{arrived_hub}")
                 continue
 
-            # --- RULE B: The drone is on a hub and wants to move ---
             next_hub = drone.get_next_hub()
             if not next_hub:
                 continue
@@ -174,11 +166,9 @@ class SimulationEngine:
 
             dest_hub_obj = self.graph.hubs[next_hub]
 
-            # Check Hub Capacity
             if hub_occupancy[next_hub] >= dest_hub_obj.max_drones:
                 continue
 
-            # Check Connection Bandwidth
             conn_key: tuple[str, str] = (
                 min(current_hub, next_hub),
                 max(current_hub, next_hub),
@@ -189,24 +179,18 @@ class SimulationEngine:
             if current_usage >= max_capacity:
                 continue
 
-            # Move Approved: Update physical limits for subsequent drones
             hub_occupancy[current_hub] -= 1
             hub_occupancy[next_hub] += 1
             link_usage[conn_key] = current_usage + 1
 
-            # Is it a restricted zone requiring a flight?
             if dest_hub_obj.access == "restricted":
-                # Fallback connection name. Modify this if your parser
-                # extracts real connection names.
                 conn_name = f"conn_{current_hub}-{next_hub}"
                 drone.start_transit(next_hub, conn_name)
                 movements_this_turn.append(f"{drone.id}-{conn_name}")
             else:
-                # Instant jump (normal/priority zones)
                 destination = drone.move_forward()
                 movements_this_turn.append(f"{drone.id}-{destination}")
 
-        # 3. Logging & Win Condition
         if movements_this_turn:
             logger.info(" ".join(movements_this_turn))
 

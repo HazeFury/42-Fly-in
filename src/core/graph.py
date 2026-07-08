@@ -17,9 +17,9 @@ class Hub:
         x: int,
         y: int,
         zone_type: str,
-        max_drones: int = 1,  # default 1
-        access: str = "normal",  # default "normal"
-        color: str | None = None,  # default None
+        max_drones: int = 1,
+        access: str = "normal",
+        color: str | None = None,
     ) -> None:
         """Initialize the hub with data from the parsed model."""
         self.name: str = name

@@ -17,12 +17,11 @@ class ParsedLevelData(TypedDict):
     connections: list[dict[str, Any]]
 
 
-# Pre-compile regex patterns for better performance
-# Capture negative numbers as well so we can raise a proper error later
+# Pre-compile regex patterns
+# Matches: nb_drones: x
 PATTERN_DRONES = re.compile(r"^nb_drones:\s+(?P<count>-?\d+)$")
 
 # Matches: start_hub|hub|end_hub: name x y [optional_metadata]
-# metadata regex [^\[\]]+ ensures no nested / consecutive brackets exist inside
 PATTERN_ZONE = re.compile(
     r"^(?P<type>start_hub|hub|end_hub):\s+"
     r"(?P<name>[^\s-]+)\s+"
@@ -49,7 +48,7 @@ CONN_META_KEYS = {"max_link_capacity"}
 def extract_metadata(
     meta_string: str | None,
     line_number: int,
-    allowed_keys: set[str],  # New parameter to enforce context
+    allowed_keys: set[str],
 ) -> dict[str, str]:
     """
     Extracts key-value pairs from a metadata string.
@@ -61,7 +60,6 @@ def extract_metadata(
 
     meta_dict: dict[str, str] = {}
 
-    # Split the metadata string by whitespace into individual tokens
     tokens = meta_string.split()
 
     for token in tokens:
@@ -124,11 +122,9 @@ def parse_map_file(filepath: str) -> ParsedLevelData:
             for line_number, raw_line in enumerate(file, start=1):
                 line = raw_line.split("#")[0].strip()
 
-                # Ignore comments and empty lines
                 if not line:
                     continue
 
-                # Immediately reject multiple brackets anywhere on the line
                 if line.count("[") > 1 or line.count("]") > 1:
                     raise ParseError(
                         "Multiple metadata brackets are not allowed.",

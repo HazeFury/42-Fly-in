@@ -24,7 +24,6 @@ class Text(UILabel):
         """
         Initialize the custom button with predefined textures.
         """
-        # Call the parent class constructor without using 'return'
         super().__init__(
             text=text,
             font_size=font_size,
