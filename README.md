@@ -12,7 +12,7 @@ _This project has been created as part of the 42 curriculum by marberge._
 <div align="center">
 	<img src="https://img.shields.io/badge/Project-000000?style=for-the-badge&logo=42&logoColor=white" alt="42" />
 	<img src="https://img.shields.io/badge/Language-Python-00599C?style=for-the-badge&logo=C&logoColor=white" alt="C" />
-	<img src="https://img.shields.io/badge/Score-0/100-yellow?style=for-the-badge&logo=C&logoColor=white" alt="C" />
+	<img src="https://img.shields.io/badge/Score-125/100-green?style=for-the-badge&logo=C&logoColor=white" alt="C" />
 	<br>
 	<img src="https://img.shields.io/badge/Algorithms-darkviolet?style=for-the-badge" alt="Algorithms" />
 	<img src="https://img.shields.io/badge/Pathfinding-darkviolet?style=for-the-badge" alt="Pathfinding" />
